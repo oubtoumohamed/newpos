@@ -1,0 +1,213 @@
+<div class="user-update pannel pannel-update pannel-user"> 
+    <div class="title">
+        <i class="fa fa-caret-right" aria-hidden="true"></i>
+        <span>trans_user.ajouter</span>
+    </div>
+    <div class="data">
+        <table  class="table table-hover table-striped table-bordered">
+
+            <tr>
+                <td><label>trans_user.nom</label></td>
+                <td>
+                    <input type="text" class="form-control validate" required="required" id="nom">
+                    <span validation="trans_user.nom_validation"></span> 
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>trans_user.prenom</label></td>
+                <td>
+                    <input type="text" class="form-control validate"  required="required"id="prenom" >
+                    <span validation="trans_user.prenom_validation"></span> 
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>trans_user.email</label></td>
+                <td>
+                    <input type="email" class="form-control validate"  required="required"id="email" >
+                    <span validation="trans_user.email_validation"></span> 
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>trans_user.username</label></td>
+                <td>
+                    <input type="text" class="form-control validate"  required="required"id="username" >
+                    <span validation="trans_user.username_validation"></span> 
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>trans_user.password</label></td>
+                <td>
+                    <input type="text" class="form-control"  required="required" id="password" >
+                    <span validation="trans_user.password_validation"></span> 
+                </td>
+            </tr>
+
+            
+            <tr>
+                <td><label>trans_user.confirmation</label></td>
+                <td>
+                    <input type="text" class="form-control" required="required" id="password_confirmation" >
+                    <span validation="trans_user.password_confirmation_validation"></span> 
+
+                </td>
+            </tr>
+
+            <!-- <tr>
+                <td><label>trans_user.datearrive</label></td>
+                <td>
+                    <input type="text" class="form-control date"  id="date_arrive" >
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>trans_user.datesortie</label></td>
+                <td>
+                    <input type="text" class="form-control date" id="date_sortie" >
+                </td>
+            </tr> -->
+            <tr>
+                <td><label>trans_user.adresse</label></td>
+                <td>
+                    <textarea class="form-control" rows="3" id="adresse" ></textarea>
+                </td>
+            </tr>
+
+           <!-- <tr>
+                <td><label>trans_user.role</label></td>
+                <td>
+                    <select class="form-control"  id="role">
+                        <option value="EMPLOYE">trans_user.employe</option>
+                        <option value="DIRECTEUR">trans_user.directeur </option>  
+                    </select> 
+
+                </td>
+            </tr>-->
+           <!-- <tr>
+                <td><label>trans_user.sexe</label></td>
+                <td>
+                    <select class="form-control" name="sexe" id="sexe">
+                        <option ></option>
+                        <option value="masculin">trans_global.masculin</option>
+                        <option value="féminin">trans_global.feminin</option>
+                    </select> 
+                   &lt;!&ndash;<select class="form-control " id="sexe">
+                        <option value=""> </option>
+                        <option value="Feminine">Feminine</option>
+                        <option value="Masculine">Masculine</option>
+                    </select>&ndash;&gt;
+
+                </td>
+                 
+            </tr>-->
+            
+            <tr>
+                <td><label>trans_user.fonction</label></td>
+                <td>
+                    <select class="form-control" id="groupes" multiple=""></select>                 
+                </td>
+            </tr>
+
+        </table>
+    </div>
+    
+    <div class="actions">
+        <button type="button" class="btn btn-primary btn-sm" id="valider"> 
+            <img src="../assets/icons/svg2/check_.svg" class="btn_icon" alt="icon action" />
+            <span>trans_global.valider</span>
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" >
+            <img src="../assets/icons/svg2/cancel_.svg" class="btn_icon" alt="icon action" />
+            <span>trans_global.annuler</span>
+        </button> 
+    </div>
+</div>
+
+
+<script>
+
+jQuery(document).ready( async function(){
+
+    $groupe_selectize = null;
+
+    await loadSelect(true,'groupe', '#groupes', 'id', 'name', 'name',0, [], "all=true" ,function(result){
+
+        $groupe_selectize = $('#groupes').selectize({
+                valueField: 'id',
+                labelField: 'name',
+                searchField: 'name',
+                options: result,
+                create: false,
+        });
+        $groupe_selectize = $groupe_selectize[0].selectize;
+
+    });
+
+    var module_ = '';
+    var action_ = '';
+
+    if( params && ( params.id || params.page) ){
+
+        if( params.id ){
+            module_ = 'user/'+ params.id;
+            action_ = 'show';
+        }
+        
+        await doAjax({ 
+            module: module_,
+            action: action_,
+            success_: function(object){
+            
+                for (const [key, value] of Object.entries(object)) {
+                    $('#'+ key).val( value );
+                }
+                
+                var ds =[];
+                $.each(object.groupes, function(k, v){
+                    ds[v.id] = v.id;
+                });
+                
+                if( $groupe_selectize )
+                    $groupe_selectize.setValue(ds);    
+            }
+        })
+    }
+    
+    $('#role').selectize();
+    $('#sexe').selectize();
+
+    //ajouter ou modifier user
+    $('#valider').click( async function(){
+
+        if( checkRequiredField('.user-update') ) return;
+
+        object_ = {};
+        $('.form-control').each(function(){
+            object_[ $(this).attr('id') ] = $(this).val();
+
+        });
+        
+        var module_ = 'user';
+        var action_ = 'create';
+
+         if( params && params.id ){
+            module_ = 'user/' + params.id;
+            action_ = 'update';
+        }
+
+        await doAjax({
+            module: module_,
+            action: action_,
+            type: 'post',
+            data: object_,
+            success_: function(result){ 
+                if( ! params )
+                    $('.form-control').val('');
+            }
+        })
+    });
+});
+</script>

@@ -1,0 +1,178 @@
+<div class="product-update pannel pannel-update pannel-product"> 
+    <div class="data">
+        <table class="table table-hover table-striped table-bordered">
+            <tr>
+                <td><label>trans_product.reference</label></td>
+                <td>
+                    <input type="hidden" class="form-control" data-field="product_id" />
+                    <input type="text" id="product_reference" class="form-control validate" required="required" data-field="product_reference">
+                    <span validation="trans_product.reference_validation"></span>  
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_product.barcode</label></td>
+                <td>
+                    <input type="text" class="form-control" id="product_barcode" data-field="product_barcode">
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_product.name</label></td>
+                <td>
+                    <input type="text" class="form-control validate" required="required" data-field="product_name">
+                    <span validation="trans_product.name_validation"></span>  
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_product.purchase_price</label></td>
+                <td>
+                    <input type="number" step="0.01" min="1" class="form-control" data-field="product_purchase_price">
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_product.price</label></td>
+                <td>
+                    <input type="number" step="0.01" class="form-control validate" required="required" data-field="product_price">
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_product.stock</label></td>
+                <td>
+                    <input type="number" class="form-control validate" required="required" data-field="product_stock">
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_product.unite</label></td>
+                <td>
+                    <input type="text" class="form-control" data-field="product_unite">
+                </td>
+            </tr>
+            <!--tr>
+                <td><label>trans_product.picture</label></td>
+                <td>
+                    <input type="file" accept="image/*" class="form-control" id="product_picture">
+                </td>
+            </tr-->
+            <tr>
+                <td><label>trans_product.color</label></td>
+                <td>
+                    <input type="color" class="form-control" data-field="product_color">
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_product.supplier_id</label></td>
+                <td>
+                    <select id="product_supplier_id" class="form-control" data-field="product_supplier_id"></select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_product.categorie_id</label></td>
+                <td>
+                    <select id="product_categorie_id" class="form-control" data-field="product_categorie_id"></select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_product.shelf_id</label></td>
+                <td>
+                    <select id="product_shelf_id" class="form-control" data-field="product_shelf_id"></select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_product.notes</label></td>
+                <td>
+                    <textarea class="form-control" data-field="product_notes" style="width: 100%;"></textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="actions">
+        <button type="button" class="btn btn-primary btn-sm" id="create_product"> 
+            <i class="fa fa-check"></i>
+            <span>trans_global.valider</span>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    
+jQuery(document).ready(async function(){
+
+    var cnfg_cats = {
+        module: new Categorie(),
+        selectid: '.product-update #product_categorie_id',
+        fieldtext: 'name',
+    };
+    var cnfg_supplier = {
+        module: new Supplier(),
+        selectid: '.product-update #product_supplier_id',
+        fieldtext: 'name',
+    };
+
+    var cnfg_shelf = {
+        module: new Shelf(),
+        selectid: '.product-update #product_shelf_id',
+        fieldtext: 'code',
+    };
+
+    // modifier => remplire les input 
+    if( params && params.prdid ){
+        await find({
+            module: new Product(),
+            id: params.prdid,
+            success_: function(object){
+                for (const [key, value] of Object.entries(object)) {
+                    $('.product-update .form-control[data-field="product_'+ key+'"]').val( value );
+                }
+                $('.product-update #product_reference').trigger('change');
+
+                cnfg_cats.selected = object.categorie_id;
+                cnfg_supplier.selected = object.supplier_id;
+                cnfg_shelf.selected = object.shelf_id;
+            }
+        });
+    }
+
+    await loadSelect( cnfg_cats );
+    await loadSelect( cnfg_supplier );
+    await loadSelect( cnfg_shelf );
+
+    $('.product-update #product_reference').change(function(){
+        $brcode = $('#product_barcode');
+
+        if( !$brcode.val() )
+            $brcode.val( $(this).val() );
+    });
+    //ajouter ou modifier product
+    $('.product-update #create_product').click( async function(){
+        
+        if( checkRequiredField('.product-update') ) return;
+
+        object_ = [];
+        $('.product-update .form-control').each(function(){
+            
+            var field = $(this).data('field');
+            var val = $(this).val();
+
+            if( field ){
+                field = field.replace('product_', '');
+                object_[ field ] = val || null;
+            }
+        });
+
+        if( params && params.prdid ){
+            await save({
+                module: new Product(),
+                data: object_,
+            });
+        }else{
+            await create({
+                module: new Product(),
+                data: object_,
+            });
+        }
+        
+    });
+
+});
+
+</script>

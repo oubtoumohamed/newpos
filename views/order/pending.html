@@ -1,0 +1,264 @@
+
+<div class="container-xl pt-3 pe-5 ps-5 pb-3">
+  <!-- Page title -->
+  <div class="page-header d-print-none">
+    <div class="row align-items-center">
+      <div class="col">
+        <div class="d-flex">
+            <div class="ms-0">
+                <h2 class="page-title"> La liste des commandes </h2>
+                <!-- Page pre-title -->
+                <div class="page-pretitle">
+                  Overview
+                </div>
+            </div>
+        </div>
+      </div>
+      <!-- Page title actions -->
+      <div class="col-auto ms-auto d-print-none">
+        <div class="btn-list">
+          <span class="d-none d-sm-inline">
+            <a href="#" class="btn btn-white">
+              New view
+            </a>
+          </span>
+          <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-report">
+            <!-- Download SVG icon from http://tabler-icons.io/i/plus -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            Create new report
+          </a>
+          <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-report" aria-label="Create new report">
+            <!-- Download SVG icon from http://tabler-icons.io/i/plus -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <div class="card mt-4 orders">
+      <div class="table-responsive">
+        <table class="table card-table table-striped table-vcenter text-nowrap dataTable">
+            <thead>
+                <tr class="">
+                    <th>Référence</th>
+                    <th>Employé</th>
+                    <th>Client</th>
+                    <th>Date</th>
+                    <th>Montant</th>
+                    <th>Payé</th>
+                    <th>Date de credit</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                </tr>
+                <tr class="">
+                    <td style="width: 100px;"><input type="text" class="form-control order_ref"></td>
+                    <td style="width: 130px;"><select class="form-control order_employe"></select></td>
+                    <td style="width: 140px;"><select class="form-control order_client"></select></td>
+                    <td style="width: 100px;"><input type="text" class="form-control date default-empty order_date"></td>
+                    <td style="width: 150px;"><input type="number" step="0.01" class="form-control order_montant"></td>
+                    <td style="width: 150px;"><input type="number" step="0.01" class="form-control order_paye"></td>
+                    <td style="width: 100px;"><input type="text" class="form-control date default-empty order_creditdate"></td>
+                    <td><input type="text" class="form-control order_notes" style="width: 100%;"></td>
+                    <td style="width: 173px; text-align: right;">
+                        <button class="btn btn-default btn-sm" id="validatebarcodeSearch"><i class="fa fa-search"></i> &nbsp;Chercher</button>
+                    </td>
+                </tr>
+            </thead>
+          <tbody class=""></tbody>
+        </table>
+        <div class="actions m-3"></div>
+      </div>
+    </div>
+</div>
+
+
+<script>
+
+$(document).ready(async function(){
+
+    await loadSelect({
+        module: new User(),
+        selectid: '.order_employe',
+        fieldtext: 'firstname',
+    });
+
+    await loadSelect({
+        module: new Client(),
+        selectid: '.order_client',
+        fieldtext: 'name',
+    });
+    
+    $('#validatebarcodeSearch').click(async function(){
+        var ref = $('.order_ref').val();
+        var employe = $('.order_employe').val();
+        var client = $('.order_client').val();
+        var date = $('.order_date').val();
+        var montant = $('.order_montant').val();
+        var paye = $('.order_paye').val();
+        var creditdate = $('.order_creditdate').val();
+        var notes = $('.order_notes').val();
+
+
+        $orders = new Order();
+        $orders.select = "orders.*, clients.name as client, concat( users.firstname, ' ', users.lastename) as employee";
+        $orders.table = `orders 
+                            LEFT JOIN users 
+                                ON orders.user_id = users.id
+                            LEFT JOIN clients 
+                                ON orders.client_id = clients.id`;
+        
+        $where = ``;
+        if( ref ) $where += ` and ( reference like '%${ref}%' or reference2 like '%${ref}%' ) `;
+        if( employe ) $where += ` and user_id = ${employe} `;
+        if( client )  $where += ` and client_id = ${client} `;
+        if( date )    $where += ` and date like '%${ dateFomat(date, 'Y-DD-MM') || '' }%' `;
+        if( montant ) $where += ` and amount like '${montant}%' `;
+        if( paye )    $where += ` and payed like '${paye}%' `;
+        if( creditdate ) $where    += ` and creditdelay like '%${ dateFomat(creditdate, 'Y-DD-MM') || '' }%' `;
+        if( notes )   $where += ` and notes like '%${notes}%' `;
+
+        if( params ){
+            if( params.role == 'credit')
+                $where += ` and payed < amount `;
+            else if( params.role == 'reglee')
+                $where += ` and payed >= amount `;
+        }
+
+        await loadList({
+            load: true,
+            view: '.orders',
+            module: $orders,
+            filter: $where,
+            success_: ordercallback
+        });
+
+    }).trigger('click');
+
+})
+.off('click','.printFacture')
+.on('click','.printFacture', async function(){
+    var order_id = $(this).attr('order_id');
+
+    await find({
+        module: new Order(),
+        id: order_id,
+        success_: async function(order){
+            await new Order().products( order_id )
+            .then(async function(products) {
+                var $facthtml = await new Order().getfacturehtml( order, products );
+                await fullprintit( $facthtml );
+            })
+            .catch(function (err){ });
+        }
+    });
+})
+.off('click','.checkValidate')
+.on('click','.checkValidate', function(){
+
+    var order_id = $(this).attr('order_id');
+    var client_id = $(this).attr('client_id');
+
+    var tr = $(this).closest('.tr_order');
+    var creditdate = tr.find('.creditdate');
+    var notes = tr.find('.notes');
+
+    if( !order_id )
+        return;
+
+    var obj = {
+        id: order_id,
+    };
+
+    if( creditdate.length ){
+        if( !creditdate.val() ){
+            Swal.fire({
+                title: "La date de credit est obligatoire",
+                icon: "warning",
+            });
+            return;
+        }else{
+            var tmp_date = creditdate.val();
+            tmp_date = tmp_date.split('-');
+            obj.creditdelay = tmp_date[2]+'-'+tmp_date[1]+'-'+tmp_date[0];
+        }      
+    }
+
+    if( notes.length && !notes.val() && !client_id ){
+        Swal.fire({
+            title: "Merci de mentionner <br> le client comme notes.",
+            icon: "warning",
+        });
+        return;
+    }else{
+        obj.notes = notes.val();
+    }
+
+    showMessage({
+        title: "Valider la commande ?",
+        icon: "warning",
+        showCancelButton: true,
+        cancelButtonText: 'trans_global.annuler'
+    }).then( async (result) => {
+        if (result.isConfirmed) {
+            var $_order = new Order();
+
+            await save({
+                module: new Order(),
+                data: obj,
+                success_: function(result){
+                    //log( result );
+                }
+            });
+
+        }
+    });
+});
+    
+function ordercallback(result){
+    $.each(result.data, function(ke, order){
+
+        $creditDate = '';
+        $notes_ = '';
+        $ordr_valider = '';
+        if( order.state == "created" ) {
+            if( order.amount > order.payed ){
+                $creditDate = '<input value="'+( order.creditdelay ? dateFomat(order.creditdelay) : '' )+'" class="form-control date creditdate default-empty" placeholder="Date de credit"/>';
+            }
+            $notes_ = '<textarea rows="1" style="width: 100%" class="form-control notes resize" placeholder="Notes ...">' + order.notes +'</textarea>';
+            $ordr_valider = `<button style="padding: 5px 7px;" order_id="${ order.id || '' }" data-title="Valider" client_id="${ order.client_id || '' }" class="btn btn-sm btn-success checkValidate"><i class="fa fa-check "></i></button>`;
+        }else{
+            $creditDate = order.creditdelay ? dateFomat(order.creditdelay) : '' ;
+            $notes_ = order.notes || '' ;
+        }
+
+        $('.orders .dataTable tbody').append(
+            `<tr class="tr_order">
+                <td class="text-center">${ order.reference }</td>
+                <td class="text-start">${ order.employee ? order.employee : '' }</td>
+                <td class="text-start">${ order.client ? order.client : '' }</td>
+                <td class="text-center">${ dateFomat( order.date ) }</td>
+                <td class="text-end"><b>${ tofixed2( order.amount ) }</b></td>
+                <td class="text-end"><b>${ tofixed2( order.payed ) }</b></td>
+                <td class="text-center">${ $creditDate }</td>
+                <td class="text-start">${ $notes_ }</td>
+                <td class="text-end">
+                    ${ $ordr_valider }
+                    ${ ( order.state == 'payed' || ( params && params.type == 'bc' )  ) ? '' : `<button style="padding: 5px 7px;" class="btn btn-sm btn-warning" data-title="Réglements" loadView="order,reglement,${ order.id }" data-asmodal="true" data-modalsize="xl"><i class="fa fa-money"></i> </button>` }
+                    <button style="padding: 5px 7px;" class="btn btn-sm btn-primary" data-title="Afficher" loadView="order,show,${ order.id }" data-asmodal="true" data-modalSize="xl">
+                        <i class="fa fa-eye "></i>
+                    </button>
+                    <button style="padding: 5px 7px;" class="btn btn-sm btn-info printFacture" data-title="Imprimer la facture" order_id="${ order.id || '' }">
+                        <i class="fa fa-print "></i>
+                    </button>
+                    <button style="padding: 5px 7px;" class="btn btn-sm btn-default" data-title="Avoirs" loadView="order,avoir,{'ref':'${ order.reference }'}">
+                        <i class="fa fa-share-square-o"></i>
+                    </button>
+                </td>
+            </tr>`
+        );
+    });
+
+    applyDateTimePicker('.orders .dataTable');
+}
+</script>

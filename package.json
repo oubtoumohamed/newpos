@@ -1,0 +1,41 @@
+{
+  "name": "POS",
+  "version": "1.0.0",
+  "description": "POS JanoubTech.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "dist": "electron-builder -w",
+    "dist32": "electron-builder --ia32",
+    "distall": "electron-builder --x64 --ia32"
+  },
+  "keywords": [],
+  "author": "Janoub Tech",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^9.1.0",
+    "electron-builder": "^22.11.7"
+  },
+  "dependencies": {
+    "barcode-scanner-web": "^0.0.1",
+    "glob": "^7.1.0",
+    "moment": "^2.29.1",
+    "mysql": "^2.18.1",
+    "sqlite3": "^5.0.2"
+  },
+  "build": {
+    "appId": "com.janoubtech.gstock",
+    "productName": "POS",
+    "copyright": "Copyright © 2021 POS JanoubTech",
+    "target": "NSIS",
+    "win": {
+      "icon": "./assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "installerIcon": "./assets/icon.ico"
+    }
+  }
+}

@@ -1,0 +1,67 @@
+<div class="supplier-list pannel pannel-list pannel-supplier">
+    <div class="pannel-header">
+        <div class="header-title">
+            <i class="fa fa-caret-right" aria-hidden="true"></i>
+            trans_supplier.list
+        </div>
+        <div class="header-actions">
+            <button type="button" data-asmodal="true"  data-modalsize="md" data-permission="SUPPLIER_UPDATE" loadView="supplier,update" class="btn btn-xs pull-right">
+                <img src="../assets/icons/svg2/plus-blue.svg" class="btn_icon_xs" alt="icon action" />
+            </button>
+        </div>
+    </div>
+    <div class="data">
+        <table class="dataTable table table-hover table-striped table-bordered" id="supplier-filter">
+            <thead>
+                <tr>
+                    <th>trans_supplier.code</th>
+                    <th>trans_supplier.name</th>
+                    <th>trans_supplier.phone</th>
+                    <th>trans_supplier.adress</th>
+                    <th>trans_global.actions</th>
+                </tr>
+                <tr >
+                    <td><input type="text" class="form-control" name="code" /></td>
+                    <td><input type="text" class="form-control" name="name" /></td>
+                    <td><input type="text" class="form-control" name="phone" /></td>
+                    <td><input type="text" class="form-control" name="adress" /></td>
+                    <td>
+                        <button filter="true" filter-view=".supplier-list" filter-form="#supplier-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/search.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                        <button filter="false" filter-view=".supplier-list" filter-form="#supplier-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/cancel_.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div class="actions"></div>
+    </div>
+</div>
+
+<script>
+(async()=>{
+    await loadList({
+        load: true,
+        view: '.supplier-list',
+        module: new Supplier(), 
+        success_: list_supplier_callback
+    });
+})();
+
+function list_supplier_callback(result){
+    $.each(result.data, function (ke, object) {
+        $('.supplier-list .dataTable tbody').append(
+            '<tr>' +
+            ' <td>'+ (object.code || '' )+'</td> ' +
+            ' <td>'+ (object.name || '' )+'</td> ' +
+            ' <td>'+ (object.phone || '' )+'</td> ' +
+            ' <td>'+ (object.adress || '' )+'</td> ' +
+            ' <td> ' + listActions('supplier', object.id) + ' </td> ' +
+            ' </tr>');
+    });
+}
+</script>

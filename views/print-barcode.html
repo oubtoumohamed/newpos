@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Health First</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="../assets/css/style_new.css">
+	<script>
+		if(typeof module === "object") {
+			window.module = module;
+			module = undefined;
+		}
+
+		const electron = require('electron');
+		const {ipcRenderer } = electron;
+		const { BrowserWindow } = electron.remote;
+		//var win = remote.getCurrentWindow();
+
+		ipcRenderer.on('window-data', async function (event,data) {
+			document.body.innerHTML = data.content;
+			ipcRenderer.send('window-print', 'done');
+
+			console.log(data);
+		});
+
+		if (window.module) 
+			module = window.module;
+	</script>
+	<style>*{color-adjust: exact;  -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; } body, html { font-family: sans-serif;  }@page { font-family: sans-serif; size: auto; margin: 0px; }@media print {.pagebreak {clear: both;page-break-after: always;}}</style>
+
+</head>
+<body>
+
+</body>
+</html>

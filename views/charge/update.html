@@ -1,0 +1,77 @@
+<div class="calc row">
+
+  <div class="">
+    
+    <table class="table table-striped table-bordered" id="charge_table">
+      <tbody>
+
+        <tr> 
+          <td><b>Montant</b></td> 
+          <td>
+            <input type="number" step="0.01" id="charge_montant" class="form-control validate" required="required" placeholder="0.00">
+          </td> 
+        </tr>
+        <tr>
+          <td><b>Description</b></td> 
+          <td>
+            <textarea id="charge_description" style="width: 100%;" class="form-control validate" required="required"></textarea>
+          </td> 
+        </tr>
+        <tr>
+          <td colspan="2" style="padding: 10px;">
+            <button id="add_new_charge" class="btn btn-sm btn-primary"><i class="fa fa-plus"></i> Ajouter </button>
+          </td> 
+        </tr>
+
+      </tbody>
+    </table>
+
+  </div>
+
+  <div class="clearfix"></div>
+
+</div>
+
+
+
+<script type="text/javascript">
+$(document).ready( async function(){
+  $('#modalView .modal-header').html('<button type="button" class="close" data-dismiss="modal">&times;</button><h5 class="modal-title">Ajouter Charge</h5>');
+
+  $('#add_new_charge').click(async function(){
+
+    if( checkRequiredField('#charge_table') ) return;
+
+    object_ = {};
+    object_.type = 'normal';
+    object_.user_id = auth().id;
+    object_.date = getdate('Y-m-d');
+    object_.montant = $('#charge_montant').val();
+    object_.description = $('#charge_description').val();
+
+    await create({
+      module: new Charge(),
+      data: object_
+    });
+  });
+
+  /*await doAjax({
+    module: 'pos',
+    action: 'mescharges',
+    success_: async function(charges){
+
+      $.each( charges, function(k, reg){
+        $('#cmnd_charges tbody').append(
+          `<tr>
+            <td>${ dateTimeFomat(reg.created_at) }</td>
+            <td class="money">${ tofixed2( reg.montant ) } DH</td>
+            <td class="text-center">${ reg.user ? reg.user.text : '' }</td>
+            <td>${ reg.description || '' }</td>
+          </tr>`
+        );
+      });
+    }
+  });*/
+
+});
+</script>

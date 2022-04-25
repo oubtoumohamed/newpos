@@ -1,0 +1,108 @@
+<div class="product-list pannel pannel-list pannel-product">
+    <div class="pannel-header">
+        <div class="header-title">
+            <i class="fa fa-caret-right" aria-hidden="true"></i>
+            trans_product.list
+        </div>
+        <div class="header-actions">
+            <button type="button" data-asmodal="true"  data-modalsize="md" data-permission="PRODUCT_UPDATE" loadView="product,update" class="btn btn-xs pull-right">
+                <img src="../assets/icons/svg2/plus-blue.svg" class="btn_icon_xs" alt="icon action" />
+            </button>
+        </div>
+    </div>
+    <div class="data">
+        <table class="dataTable table table-hover table-striped table-bordered" id="product-filter">
+            <thead>
+                <tr>
+                    <th>trans_product.reference</th>
+                    <th>trans_product.name</th>
+                    <th>trans_product.purchase_price</th>
+                    <th>trans_product.price</th>
+                    <th>trans_product.unite</th>
+                    <th>trans_product.categorie_id</th>
+                    <th>trans_product.supplier_id</th>
+                    <th>trans_product.shelf_id</th>
+                    <th>trans_global.actions</th>
+                </tr>
+                <tr>
+                    <td><input type="text" class="form-control" name="reference" /></td>
+                    <td><input type="text" class="form-control" name="name" /></td>
+                    <td><input type="text" class="form-control" name="purchase_price" /></td>
+                    <td><input type="text" class="form-control" name="price" /></td>
+                    <td><input type="text" class="form-control" name="unite" /></td>
+                    <td><select id="product_categorie_id" class="form-control" name="categorie_id"></select></td>
+                    <td><select id="product_supplier_id" class="form-control" name="supplier_id"></select></td>
+                    <td><select id="product_shelf_id" class="form-control" name="shelf_id"></select></td>
+
+                    <td>
+                        <button filter="true" filter-view=".product-list" filter-form="#product-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/search.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                        <button filter="false" filter-view=".product-list" filter-form="#product-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/cancel_.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div class="actions"></div>
+    </div>
+</div>
+
+<script>
+(async()=>{
+
+    await loadSelect({
+        module: new Categorie(),
+        selectid: '#product_categorie_id',
+        fieldtext: 'name',
+    });
+    await loadSelect({
+        module: new Supplier(),
+        selectid: '#product_supplier_id',
+        fieldtext: 'name',
+    });
+    await loadSelect({
+        module: new Shelf(),
+        selectid: '#product_shelf_id',
+        fieldtext: 'code',
+    });
+
+
+    $prdlist = new Product();
+    $prdlist.table = `products 
+                        LEFT JOIN categories 
+                            ON products.categorie_id = categories.id
+                        LEFT JOIN suppliers 
+                            ON products.supplier_id = suppliers.id
+                        LEFT JOIN shelfs 
+                            ON products.shelf_id = shelfs.id`;
+    $prdlist.select = 'products.*, categories.name as cat, suppliers.name as supplier, shelfs.code as shelf';
+    $prdlist.joinwhere = '';
+    await loadList({
+        load: true,
+        view: '.product-list',
+        module: $prdlist, 
+        success_: list_product_callback
+    });
+})();
+
+function list_product_callback(result){
+    $.each(result.data, function (ke, object) {
+        $('.product-list .dataTable tbody').append(
+            '<tr>' +
+            ' <td>'+ (object.reference || '' )+'</td> ' +
+            ' <td>'+ (object.name || '' )+'</td> ' +
+            ' <td class="money">'+ ( tofixed2(object.purchase_price) || '' )+'</td> ' +
+            ' <td class="money">'+ ( tofixed2(object.price) || '' )+'</td> ' +
+            ' <td>'+ (object.unite || '' )+'</td> ' +
+            ' <td>'+ (object.cat || '' )+'</td> ' +
+            ' <td>'+ (object.supplier || '' )+'</td> ' +
+            ' <td>'+ (object.shelf || '' )+'</td> ' +
+            ' <td> ' + listActions('product', object.id, 'modal', 'md', 'prdid') + ' </td> ' +
+            ' </tr>');
+    });
+}
+</script>

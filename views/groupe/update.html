@@ -1,0 +1,101 @@
+<div class="groupe-update pannel pannel-update pannel-groupe"> 
+    <div class="data">
+        <table class="table table-hover table-striped table-bordered">
+            <tr>
+                <td><label>trans_groupe.name</label></td>
+                <td>
+                    <input type="hidden" class="form-control" data-field="groupe_id" />
+                    <input type="text" class="form-control validate" required="required" data-field="groupe_name">
+                    <span validation="trans_groupe.name_validation"></span>  
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_groupe.roles</label></td>
+                <td>
+                    <input type="text" class="form-control" data-field="groupe_roles">
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="actions">
+        <button type="button" class="btn btn-primary btn-sm" id="create_groupe"> 
+            <i class="fa fa-check"></i>
+            <span>trans_global.valider</span>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    
+jQuery(document).ready(async function(){
+
+    // modifier => remplire les input 
+    if( params && params.id ){
+        await find({
+            module: new Groupe(),
+            id: params.id,
+            success_: function(object){
+                console.log( object )
+                for (const [key, value] of Object.entries(object)) {
+                    $('.groupe-update .form-control[data-field="groupe_'+ key+'"]').val( value );
+                }
+            }, 
+            error_: function(e){
+                console.log(e);
+            }
+        });
+    }
+    //ajouter ou modifier groupe
+    $('#create_groupe').click( async function(){
+        
+        if( checkRequiredField('.groupe-update') ) return;
+
+        object_ = [];
+        $('.groupe-update .form-control').each(function(){
+            
+            var field = $(this).data('field');
+            var val = $(this).val();
+
+            if( field ){
+                field = field.replace('groupe_', '');
+                object_[ field ] = val || null;
+            }
+        });
+
+        if( params && params.id ){
+            await save({
+                module: new Groupe(),
+                data: object_, 
+                error_: function(e){
+                    console.log(e);
+                }
+            });
+        }
+        else{
+            await create({
+                module: new Groupe(),
+                data: object_, 
+                error_: function(e){
+                    console.log(e);
+                }
+            });
+        }
+
+        /*await doAjax({
+            module: module_,
+            action: action_,
+            type: 'post',
+            data: object_,
+            success_: function(result){
+                console.log( result )
+            }
+        })*/
+        
+    });
+
+
+});
+
+</script>

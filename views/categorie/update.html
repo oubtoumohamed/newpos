@@ -1,0 +1,72 @@
+<div class="categorie-update pannel pannel-update pannel-categorie"> 
+    <div class="data">
+        <table class="table table-hover table-striped table-bordered">
+            <tr>
+                <td><label>trans_categorie.name</label></td>
+                <td>
+                    <input type="hidden" class="form-control" data-field="categorie_id" />
+                    <input type="text" class="form-control validate" required="required" data-field="categorie_name">
+                    <span validation="trans_categorie.name_validation"></span>  
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="actions">
+        <button type="button" class="btn btn-primary btn-sm" id="create_categorie"> 
+            <i class="fa fa-check"></i>
+            <span>trans_global.valider</span>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    
+jQuery(document).ready(async function(){
+
+    // modifier => remplire les input 
+    if( params && params.id ){
+        await find({
+            module: new Categorie(),
+            id: params.id,
+            success_: function(object){
+                for (const [key, value] of Object.entries(object)) {
+                    $('.categorie-update .form-control[data-field="categorie_'+ key+'"]').val( value );
+                }
+            }
+        });
+    }
+    //ajouter ou modifier categorie
+    $('#create_categorie').click( async function(){
+        
+        if( checkRequiredField('.categorie-update') ) return;
+
+        object_ = [];
+        $('.categorie-update .form-control').each(function(){
+            
+            var field = $(this).data('field');
+            var val = $(this).val();
+
+            if( field ){
+                field = field.replace('categorie_', '');
+                object_[ field ] = val || null;
+            }
+        });
+
+        if( params && params.id ){
+            await save({
+                module: new Categorie(),
+                data: object_,
+            });
+        }else{
+            await create({
+                module: new Categorie(),
+                data: object_,
+            });
+        }
+        
+    });
+
+});
+
+</script>

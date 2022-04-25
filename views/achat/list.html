@@ -1,0 +1,132 @@
+<div class="achat-list pannel pannel-list pannel-achat">
+    <div class="pannel-header">
+        <div class="header-title">
+            <i class="fa fa-caret-right" aria-hidden="true"></i>
+            trans_achat.list
+        </div>
+        <div class="header-actions">
+            <button type="button" data-permission="achat_UPDATE" loadView="achat,update" class="btn btn-xs pull-right">
+                <img src="../assets/icons/svg2/plus-blue.svg" class="btn_icon_xs" alt="icon action" />
+            </button>
+        </div>
+    </div>
+    <div class="data">
+        <table class="dataTable table table-hover table-striped table-bordered" id="achat-filter">
+            <thead>
+                <tr class="border-bottom fs-5 fw-bolder">
+                    <th>Référence</th>
+                    <th>Objet</th>
+                    <th>Date</th>
+                    <th>Employé</th>
+                    <th>Fournisseur</th>
+                    <th>Montant HT</th>
+                    <th>Montant TTC</th>
+                    <th>Montant Payé</th>
+                    <th>État</th>
+                    <th>Actions</th>
+                </tr>
+                <tr class="">
+                    <td style="width: 100px;"><input name="reference" type="text" class="form-control"></td>
+                    <td><input type="text" name="objet" class="form-control" style="width: 100%;"></td>
+                    <td style="width: 100px;"><input name="date" type="text" class="form-control date default-empty"></td>
+                    <td style="width: 130px;"><select name="user_id" class="form-control" id="achatuser_id"></select></td>
+                    <td style="width: 140px;"><select name="supplier_id" class="form-control" id="achatsupplier_id"></select></td>
+                    <td style="width: 150px;"><input name="montant_ht" type="number" step="0.01" class="form-control"></td>
+                    <td style="width: 150px;"><input name="montant_ttc" type="number" step="0.01" class="form-control"></td>
+                    <td style="width: 150px;"><input name="montant_paye" type="number" step="0.01" class="form-control"></td>
+                    <td style="width: 100px;">
+                        <select name="etat" class="form-control">
+                            <option value=""></option>
+                            <option value="cree">trans_achat.cree</option>
+                            <option value="encours">trans_achat.encours</option>
+                            <option value="payed">trans_achat.payed</option>
+                        </select>
+                    </td>
+
+                    <td style="width: 30px; text-align: center;">
+                        <button filter="true" filter-view=".achat-list" filter-form="#achat-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/search.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                        <button filter="false" filter-view=".achat-list" filter-form="#achat-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/cancel_.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                    </td>
+                </tr>
+            </thead>
+            <tbody style="min-height: 20vh;"></tbody>
+        </table>
+        <div class="actions"></div>
+    </div>
+</div>
+
+<script>
+(async()=>{
+    await loadSelect({
+        module: new User(),
+        selectid: '#achatuser_id',
+        fieldtext: 'firstname,lastename',
+    });
+
+    await loadSelect({
+        module: new Supplier(),
+        selectid: '#achatsupplier_id',
+        fieldtext: 'name',
+    });
+
+    $achats = new Achat();
+    $achats.select = "achats.*, suppliers.name as supplier, concat( users.firstname, ' ', users.lastename) as employee";
+    $achats.table = `achats 
+                        LEFT JOIN users 
+                            ON achats.user_id = users.id
+                        LEFT JOIN suppliers 
+                            ON achats.supplier_id = suppliers.id`;
+
+    await loadList({
+        load: true,
+        view: '.achat-list',
+        module: $achats, 
+        success_: list_achat_callback
+    });
+})();
+ 
+function list_achat_callback(result){
+    $('.achat-list .dataTable tbody').html('');
+    $.each(result.data, function(ke, achat){
+
+        $creditDate = '';
+        $notes_ = '';
+        $ordr_valider = '';
+        if( achat.state == "created" ) {
+            if( achat.amount > achat.payed ){
+                $creditDate = '<input value="'+( achat.creditdelay ? dateFomat(achat.creditdelay) : '' )+'" class="form-control date creditdate default-empty" placeholder="Date de credit"/>';
+            }
+            $notes_ = '<textarea style="width: 100%" class="form-control notes resize" placeholder="Notes ...">' + achat.notes +'</textarea>';
+            $ordr_valider = `<button style="padding: 2px 7px;" achat_id="${ achat.id || '' }" data-title="Valider" client_id="${ achat.client_id || '' }" class="btn btn-sm btn-success checkValidate"><i class="fa fa-check "></i></button>`;
+        }else{
+            $creditDate = achat.creditdelay ? dateFomat(achat.creditdelay) : '' ;
+            $notes_ = achat.notes || '' ;
+        }
+
+        $('.achat-list .dataTable tbody').append(
+            `<tr class="tr_achat bachat-bottom">
+                <td class="text-center">${ achat.reference }</td>
+                <td class="text-start">${ achat.objet || '' }</td>
+                <td class="text-center">${ dateFomat( achat.date ) }</td>
+                <td class="text-start">${ achat.employee ? achat.employee : '' }</td>
+                <td class="text-start">${ achat.supplier ? achat.supplier : '' }</td>
+                <td class="text-end"><b>${ tofixed2( achat.montant_ht ) }</b></td>
+                <td class="text-end"><b>${ tofixed2( achat.montant_ttc ) }</b></td>
+                <td class="text-end"><b>${ tofixed2( achat.montant_paye ) }</b></td>
+                <td class="text-center">${ __('achat.' + achat.etat ) }</td>
+                <td class="text-center">
+                    ${ $ordr_valider }
+                    ${ ( achat.state == 'payed' || ( params && params.type == 'bc' )  ) ? '' : `<button style="padding: 2px 7px;" class="btn btn-sm btn-warning" data-title="Réglements" loadView="achat,reglement,${ achat.id }" data-asmodal="true" data-modalsize="lg"><i class="fa fa-money"></i> </button>` }
+                    <button style="padding: 2px 7px;" class="btn btn-sm btn-primary" data-title="Afficher" loadView="achat,update,${ achat.id }">
+                        <i class="fa fa-eye "></i>
+                    </button>
+                </td>
+            </tr>`
+        );
+    });
+}
+</script>

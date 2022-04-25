@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script>
+		if(typeof module === "object") {
+			window.module = module;
+			module = undefined;
+		}
+		const electron = require('electron');
+		const {ipcRenderer } = electron;
+		const { BrowserWindow } = electron.remote;
+		//var win = remote.getCurrentWindow();
+		ipcRenderer.on('window-data', async function (event,data) {
+			document.body.innerHTML =  data.content;
+
+			/*var body = document.body,
+    html = document.documentElement;
+	var height = Math.max( document.body.scrollHeight, body.offsetHeight, 
+                       html.clientHeight, html.scrollHeight, html.offsetHeight );
+					   alert(height);*/
+			
+			/*contentHeight = ( document.body.scrollHeight  ) / 1123;
+			pages = contentHeight > parseInt(contentHeight) ? parseInt(contentHeight) + 1 : parseInt(contentHeight);
+
+			pagesmargin = pages * ( ( data.header * 3.77 ) + ( data.footer * 3.77 ) );
+			
+			contentHeight = ( document.body.scrollHeight + pagesmargin ) / 1123;
+			pages = contentHeight > parseInt(contentHeight) ? parseInt(contentHeight) + 1 : parseInt(contentHeight);
+
+			pagination = '';
+			mainheader_contenu = '';
+
+			for (var i = 1; i <= pages; ++i) {
+				if( data.header_contenu ){
+					//mainheader_contenu += '<div class="page-header" style="top:' + ( 100*i ) + '%" >'+data.header_contenu+'</div>';
+				}
+				pagination += '<div class="page-footer" style="font-size: 12px; background: #fff; text-align: right; top:calc(' + ( 100*i ) + '% - 15px)">Page : ' + i + '/'+pages+'</div>';
+			}
+
+			document.body.innerHTML =  pagination + document.body.innerHTML;*/
+
+			ipcRenderer.send('window-print', 'done');
+		});
+
+		if (window.module) 
+			module = window.module;
+
+
+		function getHeight(){
+			var body = document.body,
+    html = document.documentElement;
+
+var height = Math.max( document.body.scrollHeight, body.offsetHeight, 
+                       html.clientHeight, html.scrollHeight, html.offsetHeight );
+			return height;
+		}
+	</script>
+	<style>
+		/*body{
+			width: 21cm;
+			max-width: 21cm;
+			min-height: 29.7cm;
+		}*/
+		
+    *{color-adjust: exact;  -webkit-print-color-adjust: exact; print-color-adjust: exact;}
+
+    body, html{ font-family: sans-serif; font-size: 10px; }
+    @page { font-family: sans-serif; font-size: 10px; size: landscape; }
+	
+	/*@page :first {
+        *margin-top: 0cm;     Top margin on first page 10cm 
+    }*/
+	/*@page :right {
+		margin-left: 0cm;   // Left margin on odd pages
+	}
+	@page :left {
+		margin-right: 0cm;  // Right margin on even pages
+	}
+	@page :last {
+		margin-bottom: 0cm; // Bottom margin on last page
+	}
+	@page :header {
+		margin-top: 0cm;    // Top margin on first page 10cm
+	}
+	@page :footer {
+		margin-bottom: 0cm; // Bottom margin on last page
+	}*/
+	
+	/* https://www.tutorialspoint.com/css/css_paged_media.htm */
+    /*@page :right{ 
+        @bottom-left {
+            margin: 10pt 0 30pt 0;
+            border-top: .25pt solid #666;
+            content: "My ---- book";
+            font-size: 9pt;
+            color: #333;
+        }
+    }*/
+    .compterendu td p{ padding: 0px; margin: 0px; }
+        
+.page-header, .page-header-space{
+    display: table-header-group;
+  }
+  
+.page-header-space, .page-footer-space {
+	background: transparent !important;
+	color: transparent !important;
+	opacity: 0 !important;
+  }
+.page-header-space *, .page-footer-space *{
+	background: transparent !important;
+	color: transparent !important;
+	opacity: 0 !important;
+  }
+  
+  .page-footer, .page-footer-space {
+    display: table-footer-group;
+  }  
+  .page-footer {
+    position: fixed;
+    right: 10px;
+    left: 10px;
+	bottom: 0;
+  }
+  .page-header {
+    position: fixed;
+    right: 10px;
+    left: 10px;
+	top: 100%;
+	color: #000;
+  } 
+  /*.pagination {
+    position: fixed;
+	bottom: -10px;
+	right: 10px;
+	color: #000;
+	background-color: #fc0;
+  } */
+  @media print {
+    .maintblpage thead {display: table-header-group;} 
+    .maintblpage tfoot {display: table-footer-group;}
+
+	.pagebreak {clear: both;page-break-after: always; background-color: #fc0;} 
+	td, tr{page-break-inside: avoid;} 
+	
+  }
+	</style>
+</head>
+<body>
+
+</body>
+</html>

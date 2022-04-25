@@ -1,0 +1,282 @@
+<div class="container" id="achat_update">
+    <div class="achat-update pannel pannel-update pannel-achat">
+        <h3 style="font-weight: bold;text-align: center;margin: 35px;">Gestion d'Achat</h3>
+        <div class="data">
+            <table class="dataTable table table-hover table-striped table-bordered" id="tableAchat">
+                <tbody>
+                  <tr> 
+                    <td><b>Référence</b> 
+                        <input type="hidden" class="form-control" data-field="achat_id" />
+                        <input type="text" class="form-control achat_reference validate" required="required" data-field="achat_reference"></td> 
+                    <td><b>Objet</b> <input type="text" class="form-control achat_objet" data-field="achat_objet"></td> 
+                    <td><b>Date</b> <input type="text" class="form-control date achat_date validate" required="required" data-field="achat_date"></td> 
+                    <td><b>Fournisseur</b> <select class="form-control validate" required="required" data-field="achat_supplier_id" id="achat_supplier_id"></select></td> 
+                    <td style="text-align: right;" rowspan="2"><button type="button" class="btn btn-primary btn-sm" id="valider">trans_global.valider</button></td> 
+                  </tr>
+                  <tr class="show_edit" style="display: none;">
+                    <th><b>Montant HT</b> <input type="text" readonly disabled class="form-control achat_montant_ht"></th>
+                    <th><b>Montant TTC</b> <input type="text" readonly disabled class="form-control achat_montant_ttc"></th>
+                    <th><b>Montant Payé</b> <input type="text" readonly disabled class="form-control achat_montant_paye"></th>
+                    <th><b>État</b> <input type="text" readonly disabled class="form-control achat_etat"></th>
+                  </tr>
+                  <!--tr>
+                    <td><b>TVA</b> <input type="text" class="form-control achat_tva" data-field="achat_tva"></b></td> 
+                    <td><b>État</b> <input type="text" class="form-control achat_etat" data-field="achat_etat"></b></td> 
+                  </tr-->
+                </tbody>
+            </table>
+
+            <div class="clearfix"></div>
+
+            <div id="achat_products" style="display: none;" >
+                <h4 style="text-align: center;margin: 0;background: #d1d1d1;padding: 10px;margin: 30px 0 0 0;font-weight: bold;">Les produits</h4>
+                <table class="table table-hover table-striped table-bordered" style="border: solid 1px #00639dc4;">
+                    <thead style="background: #00639dc4;color: #fff;">
+                        <tr>
+                            <th>Produit</th>
+                            <th class="text-center" style="width: 20px;">Prix Achat</th>
+                            <th class="text-center" style="width: 20px;">Prix Vent</th>
+                            <th class="text-center" style="width: 20px;">Qté.</th>
+                            <th class="text-center" style="width: 80px;">TVA</th>
+                            <th class="text-center" style="width: 80px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot style="background: #00639dc4;">
+                        <tr>
+                            <td>
+                                <div style="width: 92%;float: left;">
+                                    <select class="form-control validate" required="required" id="ap_product_id"></select>
+                                </div>
+                                <div>
+                                    <button type="button" data-permission="PRODUCT_UPDATE" data-subview="true" data-asmodal="true" loadView="product,update" class="btn btn-xs pull-right">
+                                        <img src="../assets/icons/svg2/plus-blue.svg" class="btn_icon_xs" alt="icon action" />
+                                    </button>
+                                </div>
+                            </td>
+                            <td><input class="form-control validate" min="0.01" required="required" id="ap_prix" type="number" step="0.01" style="width: 130px;"></td>
+                            <td><input class="form-control" id="ap_prix_vent" type="number" step="0.1" style="width: 130px;"></td>
+                            <td><input class="form-control validate" min="1" required="required" value="1" id="ap_quantite" type="number" step="0.01" style="width: 80px;"></td>
+                            <td>
+                                <input class="form-control" id="ap_tva" type="number" step="0.1" style="width: 60px;display: inline;">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-warning btn-sm" id="add_product">trans_global.add</button>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+var $_listproducts_ = [];
+
+$(document).ready( async function(){
+
+    $supplier_id = 0;
+
+    if( params && params.id ){
+        await find({
+            module: new Achat(),
+            id: params.id,
+            success_: async function(achat){
+                
+                $('#achat_products, .show_edit').show();
+
+                for (const [key, value] of Object.entries(achat)) {
+                    $('#tableAchat .form-control[data-field="achat_'+ key+'"]').val( value );
+                }
+
+                $supplier_id = achat.supplier_id;
+                /*$('#achat_update .achat_reference').val( achat.reference );
+                $('#achat_update .achat_date').val( achat.date ? dateFomat(achat.date) : '-' );
+                //$('#achat_update #achat_supplier_id').val( achat.supplier_id );
+                $('#achat_update .achat_objet').val( achat.objet || '' );
+                $('#achat_update .achat_tva').val( achat.tva );
+                $('#achat_update .achat_etat').val( achat.etat );
+                $('#achat_update .achat_montant').val( tofixed2(achat.amount) );
+                $('#achat_update .achat_paye').val( tofixed2( achat.payed ) );
+                $('#achat_update .achat_rest').val( tofixed2( achat.amount - achat.payed ) );*/
+
+                await load_achat_products( achat );
+            }
+        });
+    }
+
+    await loadSelect({
+        module: new Supplier(),
+        selectid: '#achat_supplier_id',
+        fieldtext: 'name',
+        selected: $supplier_id
+    });
+
+    await loadSelect({
+        load: true,
+        module: new Product(),
+        selectid: '#ap_product_id',
+        fieldtext: 'reference,name',
+        otherfields: ', purchase_price, price',
+        selected: $supplier_id,
+        callback: function (data){
+            data.map((p)=>{ $_listproducts_['prd_'+p.id] = p });
+        },
+    });
+
+    $('#ap_product_id').change(function(){
+        var _val_ = $(this).val();
+        if( $_listproducts_['prd_'+_val_] ){
+            $('#ap_prix').val( $_listproducts_['prd_'+_val_].purchase_price )
+            $('#ap_prix_vent').val( $_listproducts_['prd_'+_val_].price )
+        }
+    })
+
+    $('#valider').click( async function(){
+        if( checkRequiredField('#tableAchat') ) return;
+
+        object_ = [];
+        $('#tableAchat .form-control').each(function(){            
+            var field = $(this).data('field');
+            var val = $(this).val();
+
+            if( $(this).hasClass('date') ){
+                var tmp_date = val.split('-');
+                val = tmp_date[2]+'-'+tmp_date[1]+'-'+tmp_date[0];
+            }
+
+            if( field ){
+                field = field.replace('achat_', '');
+                object_[ field ] = val || null;
+            }
+        });
+
+        object_['user_id'] = auth().id;
+
+        if( params && params.id ){
+            await save({
+                module: new Achat(),
+                data: object_,
+                closemodal: false,
+                success_: async function(achat){
+                    await loadView({
+                        module: "achat",
+                        action: "update",
+                        params: {
+                            id: achat.id,
+                        }
+                    });
+                }
+            });
+        }else{
+            object_['etat'] = 'cree';
+            await create({
+                module: new Achat(),
+                data: object_,
+                closemodal: false,
+                success_: async function(achat){
+                    await loadView({
+                        module: "achat",
+                        action: "update",
+                        params: {
+                            id: achat.id,
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    $('#add_product').click( async function(){
+
+        if( checkRequiredField('#achat_products tfoot') ) return;
+        //
+        object_ = [];
+        $('#achat_products tfoot .form-control').each(function(){            
+            var field = $(this).attr('id');
+            var val = $(this).val();
+
+            if( $(this).hasClass('date') ){
+                var tmp_date = val.split('-');
+                val = tmp_date[2]+'-'+tmp_date[1]+'-'+tmp_date[0];
+            }
+
+            if( field ){
+                field = field.replace('ap_', '');
+                object_[ field ] = val || null;
+            }
+        });
+
+        object_['achat_id'] = params.id;
+
+        var data = await new Achat().addProduct( params.id, object_)
+        .then( async (achat)=>{
+            if( achat && achat.id ){
+                $('#achat_products tfoot .form-control').val('');
+                $selectizes["#ap_product_id"].setValue('');
+                await load_achat_products( achat );
+            }
+        });
+
+        /*if( params && params.id ){
+            await save({
+                module: new AchatProduct(),
+                data: object_,
+            });
+        }else{
+        }*/
+    });
+});
+
+async function load_achat_products(achat){
+    await new Achat().products( params.id )
+    .then(function(products) {
+        $('#achat_update #achat_products tbody').html('');
+        
+        var total_prix = 0;
+        var total_prix_vent = 0;
+        var total_quantite = 0;
+        var total_tva = 0;
+
+        $.each( products, function(k, prd){
+            $('#achat_update #achat_products tbody').append(
+              `<tr>
+                <td>${ prd.reference } | ${ prd.name }</td>
+                <td class="money">${ tofixed2( prd.prix ) }</td>
+                <td class="money">${ tofixed2( prd.prix_vent ) }</td>
+                <td class="text-center">${ prd.quantite }</td>
+                <td class="text-center">${ prd.tva || '0' } %</td>
+                <td class="text-center">${ listDestroyAction('achat_product', prd.id, "modal", "id", 'load_achat_products') }</td>
+              </tr>`
+            );
+
+            total_prix_vent +=  prd.prix_vent;
+            total_prix +=  prd.prix;
+            total_quantite +=  prd.quantite;
+            total_tva +=  prd.tva;
+        });
+
+        $('#achat_update #achat_products tbody').append(
+          `<tr style="background: #000; color: #fff; font-weight: bold;">
+            <td> Total : </td>
+            <td class="money">${ tofixed2( total_prix ) }</td>
+            <td class="money">${ tofixed2( total_prix_vent ) }</td>
+            <td class="text-center">${ total_quantite }</td>
+            <td class="text-center">${ total_tva || '0' } %</td>
+            <td class="text-center">-</td>
+          </tr>`
+        );
+    })
+    .catch(function (err){ });
+
+
+    $('#tableAchat .form-control[data-field="achat_date"]').val( dateFomat(achat.date) );
+    $('#tableAchat .achat_montant_ht').val( tofixed2(achat.montant_ht) );
+    $('#tableAchat .achat_montant_ttc').val( tofixed2(achat.montant_ttc) );
+    $('#tableAchat .achat_montant_paye').val( tofixed2(achat.montant_paye) );
+    $('#tableAchat .achat_etat').val( achat.etat );
+}
+</script>

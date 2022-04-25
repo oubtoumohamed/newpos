@@ -1,0 +1,127 @@
+<div class="container-fluid">
+  <!--begin::Header-->
+  <div class="card-header border-0 text-center">
+    <input type="text" class="form-control" id="refrence" value="" placeholder="Recherche ..." />
+    <button class="btn btn-primary btn-sm" id="validaterefrence">Valider</button>
+    <input type="number" style="display: inline-block;" class="form-control" id="nbritem" value="1" placeholder="Nombre ..." />
+    <div class="btn-group btn-sm" id="printBarcodesWithlist" > <!-- btn group 1, default --> 
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"> 
+            Imprimer
+        </button>
+        <ul class="dropdown-menu dropdown_barcode_list_printers" data-content-print="barcodes_content" role="menu" >
+        </ul>
+    </div>
+  </div>
+  <!--end::Header-->
+  <!--begin::Body-->
+  <div class="card-body py-0 row">    
+    <div id="div_barcode"></div>
+  </div>
+</div>
+
+<script>
+
+$(document).ready(async function(){
+    
+    $('#validaterefrence').click(async function(){
+        var reference = $('#refrence').val();
+
+        await doAjax({
+            module: 'pos',
+            action: 'getproduct',
+            data: {
+                ref: reference
+            },
+            success_: function(result){
+                if( result && result.product && result.product.id ){
+                    $('#div_barcode').html(result.barcode)
+                }
+            }
+        });
+
+    }).trigger('click');
+
+})
+.off('click','.paye')
+.on('click','.paye', function(){
+
+    var order_id = $(this).attr('order_id');
+    var tr = $(this).closest('.tr_order');
+
+    if( !order_id )
+        return;
+
+    showMessage({
+        title: "Marque la commande comme payée ?",
+        icon: "warning",
+        showCancelButton: true,
+        cancelButtonText: 'trans_global.annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            return doAjax({
+                module: 'pos/order/'+order_id,
+                action: 'payee',
+                success_: function(order){
+                    if( order.state == "payed" ){
+                        showMessage({
+                            title : 'La commande "'+order.reference+'"<br> marque comme payée',
+                            icon : 'success'
+                        });
+                        tr.remove();
+                    }
+                }
+            });
+        }
+    });
+
+});
+
+
+    
+function barcodes_content(result){
+    var nbr = parseInt( $('#nbritem').val() );
+    var content = $('#div_barcode').html();
+    for (var i = 1 ; i < nbr; i++) {
+        content += $('#div_barcode').html();
+    }
+    return content;
+}
+    
+function ordercallback(result){
+    $.each(result.data, function(ke, order){
+
+        $('.orders .dataTable').append(
+            `<tr class="tr_order border-bottom">
+                <td class="text-center p-4">${ order.reference }</td>
+                <td class="text-center p-4">
+                    ${ order.employee ? order.employee.firstname +' '+ order.employee.firstname : '-' }
+                </td>
+                <td class="text-center p-4">
+                    ${ order.client ? order.client.name : '-' }
+                </td>
+                <td class="text-center p-4">
+                    ${ dateFomat( order.date ) }
+                </td>
+                <td class="text-end"><b>${ tofixed2( order.amount ) }</b></td>
+                <td class="text-end"><b>${ tofixed2( order.payed ) }</b></td>
+                <td class="text-end"><b>${ tofixed2( order.amount - order.payed ) }</b></td>
+                <td class="text-center">
+                    ${ order.creditdelay ? dateFomat(order.creditdelay) : '' }
+                </td>
+                <td class="text-center">${ order.notes }</td>
+                <td class="text-end p-4">
+                    <button order_id="${ order.id || '' }" class="btn btn-sm btn-success paye"><i class="fa fa-money"></i> &nbsp;Payée</button>
+                </td>
+            </tr>`);
+    });
+}
+</script>
+<style type="text/css">
+
+#div_barcode{
+  text-align: center;
+  padding: 20px;
+}
+#div_barcode .barcode{
+  display: inline-block;
+</style>

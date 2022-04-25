@@ -1,0 +1,119 @@
+<div class="user-update pannel pannel-update pannel-user">
+    <div class="title">
+        <i class="fa fa-caret-right" aria-hidden="true"></i>
+        <span>trans_user.ajouter</span>
+    </div>
+    <div class="data">
+        <table  class="table table-hover table-striped table-bordered">
+            <tr>
+                <td><label>trans_user.nom</label></td>
+                <td>
+                    <input type="text" class="form-control validate" required="required" id="nom">
+                    <span validation="trans_user.nom_validation"></span>
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>trans_user.prenom</label></td>
+                <td>
+                    <input type="text" class="form-control validate"  required="required"id="prenom" >
+                    <span validation="trans_user.prenom_validation"></span>
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>trans_user.email</label></td>
+                <td>
+                    <input type="email" class="form-control validate"  required="required"id="email" >
+                    <span validation="trans_user.email_validation"></span>
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_user.password</label></td>
+                <td>
+                    <input type="text" class="form-control"  required="required" id="password" >
+                    <span validation="trans_user.password_validation"></span>
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_user.confirmation</label></td>
+                <td>
+                    <input type="text" class="form-control" required="required" id="password_confirmation" >
+                    <span validation="trans_user.password_confirmation_validation"></span>
+
+                </td>
+            </tr>
+            <tr>
+               <!-- <td><label>trans_user.sexe</label></td>
+                <td>
+                    <select class="form-control" name="sexe" id="sexe">
+                        <option ></option>
+                        <option value="masculin">trans_global.masculin</option>
+                        <option value="féminin">trans_global.feminin</option>
+                    </select>
+                </td>-->
+            </tr>
+
+        </table>
+    </div>
+
+    <div class="actions">
+        <button type="button" class="btn btn-primary btn-sm" id="valider">
+            <img src="../assets/icons/svg2/check_.svg" class="btn_icon" alt="icon action" />
+            <span>trans_global.valider</span>
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" >
+            <img src="../assets/icons/svg2/cancel_.svg" class="btn_icon" alt="icon action" />
+            <span>trans_global.annuler</span>
+        </button>
+    </div>
+</div>
+<script>
+
+    jQuery(document).ready( async function(){
+
+                module_ = 'user';
+                action_ = 'profile';
+
+
+            await doAjax({
+                module: module_,
+                action: action_,
+                success_: function(object){
+
+                    for (const [key, value] of Object.entries(object)) {
+                        $('#'+ key).val( value );
+                    }
+
+                }
+            });
+
+
+        $('#sexe').selectize();
+
+        //ajouter ou modifier user
+        $('#valider').click( async function(){
+
+            if( checkRequiredField('.user-update') ) return;
+
+            object_ = {};
+            $('.form-control').each(function(){
+                object_[ $(this).attr('id') ] = $(this).val();
+
+            });
+
+            module_ = 'user';
+            action_ = 'profile_update';
+
+            await doAjax({
+                module: module_,
+                action: action_,
+                type: 'post',
+                data: object_,
+                success_: function(result){
+                    closeModal()
+                }
+            })
+        });
+    });
+</script>

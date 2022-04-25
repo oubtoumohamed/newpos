@@ -1,0 +1,360 @@
+<div class="calc row">
+  <!-- ToalCart -->
+  <div class="col-md-7">
+    <table id="cartInfos">
+      <tbody>
+        <tr>
+          <td>Total : </td>
+          <td>
+            <span id="span_paiement_total" class="fntsize"></span> DH
+            <input type="hidden" id="paiement_total" disabled="disabled" readonly="readonly" value="0" placeholder="0.00">
+          </td>
+          <td rowspan="5" style="border: none; padding-left: 10px;">
+            <textarea class="form-control" id="order_notes" style="width: 100%;border: solid 1px #ccc;padding: 5px;height: 235px;margin-left: 3%;font-size: 1.3em;" placeholder="Notes ..." ></textarea> 
+            <!--label class="form-check-label" for="avoirflexSwitch">
+              <input class="form-check-input" type="checkbox" id="avoirflexSwitch" value="1">Retour normale.
+            </label-->
+          </td>
+        </tr>
+        <tr>
+          <td>Payée : </td>
+          <td>
+            <span id="span_paiement" class="fntsize"></span> DH
+            <input type="hidden" id="paiement" disabled="disabled" readonly="readonly" value="" placeholder="0.00">
+          </td>
+        </tr>
+        <tr>
+          <td>Reste : </td>
+          <td>
+            <span id="span_paiement_rest" class="fntsize"></span> DH
+            <input type="hidden" id="paiement_rest" disabled="disabled" readonly="readonly" placeholder="0.00">
+          </td>
+        </tr>
+        <tr>
+          <td>Client : </td>
+          <td> <select id="client_id" class="form-control"></select> </td>
+        </tr>
+        <tr>
+          <td class="actions_" colspan="2">
+            <button id="createOrder" class="btn btn-success" >Valider Panier</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- / ToalCart -->
+  <!-- Calculator -->
+  <div class="col-md-5">
+    <table id="calculator" style="width: 100%;">
+      <tbody>
+        <tr class="rw_">
+          <td>
+            <button data-value="7" class="btn-val btnval_7 btn btn-light">7</button>
+          </td>
+          <td>
+            <button data-value="8" class="btn-val btnval_8 btn btn-light">8</button>
+          </td>
+          <td>
+            <button data-value="9" class="btn-val btnval_9 btn btn-light">9</button>
+          </td>
+          <td>
+            <button data-value="200" class="btn-money btn btn-light img_">
+              <img src="../assets/img/checkout/money/200dh.jpg" alt="200 DH" title="200 DH" width="10">
+            </button>
+          </td>
+        </tr>
+        <tr class="rw_">
+          <td>
+            <button data-value="4" class="btn-val btnval_4 btn btn-light">4</button>
+          </td>
+          <td>
+            <button data-value="5" class="btn-val btnval_5 btn btn-light">5</button>
+          </td>
+          <td>
+            <button data-value="6" class="btn-val btnval_6 btn btn-light">6</button>
+          </td>
+          <td>
+            <button data-value="100" class="btn-money btn btn-light img_">
+              <img src="../assets/img/checkout/money/100dh.png" alt="100 DH" title="100 DH" width="10">
+            </button>
+          </td>
+        </tr>
+        <tr class="rw_">
+          <td>
+            <button data-value="1" class="btn-val btnval_1 btn btn-light">1</button>
+          </td>
+          <td>
+            <button data-value="2" class="btn-val btnval_2 btn btn-light">2</button>
+          </td>
+          <td>
+            <button data-value="3" class="btn-val btnval_3 btn btn-light">3</button>
+          </td>
+          <td>
+            <button data-value="50" class="btn-money btn btn-light img_">
+              <img src="../assets/img/checkout/money/50dh.jpg" alt="50 DH" title="50 DH" width="10">
+            </button>
+          </td>
+        </tr>
+        <tr class="rw_">
+          <td>
+            <button data-value="0" class="btn-val btnval_0 btn btn-light">0</button>
+          </td>
+          <td>
+            <button class="btn-vergule btn btn-light">.</button>
+          </td>
+          <td>
+            <button class="btn-delete btn btn-light">
+              <img src="../assets/img/checkout/backspace.png" alt="Effacer" title="Effacer" height="20px">
+            </button>
+          </td>
+          <td>
+            <button data-value="20" class="btn-money btn btn-light img_">
+              <img src="../assets/img/checkout/money/20dh.jpg" alt="20 DH" title="20 DH" width="10">
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="clearfix"></div>
+  <!-- / Calculator -->
+  
+</div>
+
+<script type="text/javascript">
+  scannerInput = scanner.input;
+  scanner.input = function(){};
+  
+  var $data;
+  var time = null;
+  var $clients = [];
+  $(document).ready(async function(){
+
+
+
+    await loadSelect({
+      module: new Client(),
+      selectid: '#cartInfos #client_id',
+      fieldtext: 'code,name',
+      callback: function(data){
+        $clients = $clients.concat(data);
+      }
+    });
+
+    update_rest();
+
+    $('#calculator .btn-val').click(function(){
+      var val = $(this).data('value');
+      var oldval = $('#paiement').val();
+      $('#paiement').val( parseFloat( oldval + val ) || 0);
+      update_rest();
+    });
+
+    $('#calculator .btn-money').click(function(){
+      var val = parseInt( $(this).data('value') ) || 0;
+      var oldval = parseFloat( $('#paiement').val() ) || 0;
+      $('#paiement').val(parseFloat( oldval + val ) || 0);
+      update_rest();
+    });
+
+    $('#calculator .btn-vergule').click(function(){
+      var val = $('#paiement').val(); ///) || 0;
+      if( val.indexOf('.') == -1 ){
+        val += '.';
+        $('#paiement').val(val);
+      }
+
+      //alert('mlkl');
+      //var oldval = parseFloat( $('#paiement').val() ) || 0;
+      //$('#paiement').val(oldval + val)
+      update_rest();
+    });
+
+    $('#calculator .btn-delete').click(function(){
+      var val = $('#paiement').val(); ///) || 0;
+      //;
+      /*console.log(  );
+      if( val.indexOf('.') == -1 ){
+        val += '.';
+        $('#paiement').val(val);
+      }*/
+      $('#paiement').val( val.slice(0, -1) );
+      update_rest();
+    });
+
+    $('#createOrder').click(async function(){
+      //
+      var $quit = false;
+      var $avoired_ = $('#avoirflexSwitch').is(':checked');
+      var $client_id_ = parseInt( $('#client_id').val() ) || 0;
+      var $payed_ = parseFloat( $('#paiement').val() ) || 0;
+      var $order_notes = $('#order_notes').val();
+
+      if( Object.keys($cart).length == 0 ){
+        Swal.fire({
+          title: 'Ajouter des produits.',
+          icon: 'warning',
+        }).then((result) => {
+          //location.reload();
+        });
+
+        $quit = true;
+        return false;
+      }
+
+      if( $client_id_ > 0 ){
+        // check client plafound
+        $.each( $clients, function(k, client){
+          if( client.id == $client_id_ ){
+            if( client.plafond < totalCart ){
+              showMessage({
+                title: 'Hors plafond',
+                html: 'le client a une plafond de <b>'+tofixed2(client.plafond)+' DH</b>',
+                icon: 'warning',                
+              });
+              $quit = true;
+              return false;
+            }
+          }
+        });
+
+        if( $avoired_ && $client_id_ ){
+          showMessage({
+            title: 'Retour avancé',
+            html: 'Tant que vous avez le client,<br> essayer d\'utiliser l\'option <br><b>"Retour avancé"</b>',
+            icon: 'warning',                
+          });
+          $quit = true;
+          return false;
+        }
+      }
+
+      if($quit == false){
+        // create order
+        $data = {
+          'avoired' : $avoired_,
+          'client_id': $client_id_,
+          'total' : totalCart,
+          'payed' : $payed_,
+          'order_notes' : $order_notes,
+          'type' : order_type,
+          'supplier_id': $('.oredrsupplier_id').val(),
+          'products' : []
+        }
+
+        for( var pid in $cart ) { 
+          $data.products.push( $cart[pid] );
+        }
+
+        loading();
+
+        var order = new Order();
+
+        await order.checkout($data)
+        .then(function(result) {
+
+          loading(0);
+          if( result && result.success && result.order && result.order.id ){
+
+            cnfrmtext = 'La facture';
+            defaultprintcontent = result.facture;
+
+            if( result.type == 'bc' ){
+              cnfrmtext = 'Le bon de commande';
+            }
+
+            showMessage({
+              title: result.success + ' <br><br> <b style="color:#f00;">Imprimer ?.</b>',
+              icon: 'success',
+              showDenyButton: result.type == 'bc',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#555',
+              confirmButtonText: cnfrmtext,
+              denyButtonText: 'Bon de commande / Facture',
+              cancelButtonText: 'trans_global.annuler',
+              allowEscapeKey : false,
+              allowOutsideClick: false,
+            }).then(async (rs) => {
+              if( rs.isConfirmed ){
+                await fullprintit(defaultprintcontent);
+              } else if (rs.isDenied) {
+                await fullprintit(defaultprintcontent + '<div class="pagebreak"></div>' + result.boncommande);
+              }
+            });
+
+            closeModal();
+            $cart = [];
+            updateCart();
+
+          }else if( result && result.error ){
+            showMessage({
+              title: 'Erreur !, SVP essayer encore',
+              text: result.error,
+              icon: 'error'
+            });
+          }
+        
+        })
+        .catch(function (err){
+          showMessage({
+            title: 'Erreur !, SVP essayer encore',
+            text: err.message,
+            icon: 'error'
+          });
+        });
+
+        loading(0);
+      }
+
+    });
+  })
+  .off('keyup')
+  .on('keyup', function(event){
+    if ( event.target.nodeName == 'INPUT' || event.target.nodeName == 'TEXTAREA' )
+      return;
+    
+    if( time == null )
+        time = new Date().getTime();
+    
+    var k = event.key;
+
+    if( new Date().getTime() - time < 20 ){
+      return;
+    }
+
+    time = new Date().getTime();
+
+    if( k == '.' )
+      $('.btn-vergule').trigger('click');
+    else if( k == 'Backspace' )
+      $('.btn-delete').trigger('click');
+    else{
+      k = parseInt(k);
+      if( (k >= 0 && k <= 9) && $('.btn-val.btnval_'+k).length )
+        $('.btn-val.btnval_'+k).trigger('click');
+    }
+    
+    //if( k == 'Enter' )
+    //  $('#checkoutCart').trigger('click');
+  });
+
+  function update_rest(){
+    $('#paiement_total').val( totalCart );
+    $('#span_paiement_total').text( tofixed2(totalCart) );
+
+    var paiement = parseFloat($('#paiement').val()) || 0;
+    $('#span_paiement').text( tofixed2(paiement) );
+
+    var rest_ = totalCart - paiement;
+
+    $('#paiement_rest').val( rest_ );
+    $('#span_paiement_rest').text( tofixed2(rest_) );
+  }
+</script>
+
+<style type="text/css">
+  .fntsize{
+    font-size: 1.5em;
+  }
+</style>

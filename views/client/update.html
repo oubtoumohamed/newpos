@@ -1,0 +1,146 @@
+<div class="client-update pannel pannel-update pannel-client"> 
+    <div class="data">
+        <table class="table table-hover table-striped table-bordered">
+            <tr>
+                <td><label>trans_client.code</label></td>
+                <td>
+                    <input type="hidden" class="form-control" data-field="client_id" />
+                    <input type="text" class="form-control" data-field="client_code">
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_client.name</label></td>
+                <td>
+                    <input type="text" class="form-control validate" required="required" data-field="client_name">
+                    <span validation="trans_client.name_validation"></span>  
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_client.type</label></td>
+                <td>
+                    <select class="form-control" data-field="client_type">
+                        <option value="personn">trans_client.type_personn</option>
+                        <option value="company">trans_client.type_company</option>
+                        <option value="prospect">trans_client.type_prospect</option>
+                        <option value="partner">trans_client.type_partner</option>
+                        <option value="reseller">trans_client.type_reseller</option>
+                        <option value="vendor">trans_client.type_vendor</option>
+                        <option value="other">trans_client.type_other</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_client.phone</label></td>
+                <td><input type="text" class="form-control" data-field="client_phone"></td>
+            </tr>
+            <tr>
+                <td><label>trans_client.fix</label></td>
+                <td><input type="text" class="form-control" data-field="client_fix"></td>
+            </tr>
+            <tr>
+                <td><label>trans_client.adress</label></td>
+                <td><input type="text" class="form-control" data-field="client_adress"></td>
+            </tr>
+            <tr>
+                <td><label>trans_client.email</label></td>
+                <td><input type="text" class="form-control" data-field="client_email"></td>
+            </tr>
+            <tr>
+                <td><label>trans_client.rc</label></td>
+                <td><input type="text" class="form-control" data-field="client_rc"></td>
+            </tr>
+            <tr>
+                <td><label>trans_client.cnss</label></td>
+                <td><input type="text" class="form-control" data-field="client_cnss"></td>
+            </tr>
+            <tr>
+                <td><label>trans_client.ifescale</label></td>
+                <td><input type="text" class="form-control" data-field="client_ifescale"></td>
+            </tr>
+            <tr>
+                <td><label>trans_client.ice</label></td>
+                <td><input type="text" class="form-control" data-field="client_ice"></td>
+            </tr>
+            <tr>
+                <td><label>trans_client.active</label></td>
+                <td><input type="checkbox" checked="checked" class="form-control client_active"></td>
+            </tr>
+            <tr>
+                <td><label>trans_client.plafond</label></td>
+                <td><input type="number" step="0.01" value="" class="form-control" data-field="client_plafond"></td>
+            </tr>
+        </table>
+    </div>
+    <div class="actions">
+        <button type="button" class="btn btn-primary btn-sm" id="create_client"> 
+            <i class="fa fa-check"></i>
+            <span>trans_global.valider</span>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    
+jQuery(document).ready(async function(){
+
+    // modifier => remplire les input 
+    if( params && params.id ){
+        await find({
+            module: new Client(),
+            id: params.id,
+            success_: function(object){
+                for (const [key, value] of Object.entries(object)) {
+                    $('.client-update .form-control[data-field="client_'+ key+'"]').val( value );
+                }
+                $('.client-update .form-control.client_active').prop('checked', object.active);
+            }
+        });
+    }
+    //ajouter ou modifier client
+    $('#create_client').click( async function(){
+        
+        if( checkRequiredField('.client-update') ) return;
+
+        object_ = [];
+        $('.client-update .form-control').each(function(){
+            
+            var field = $(this).data('field');
+            var val = $(this).val();
+
+            if( field ){
+                field = field.replace('client_', '');
+                object_[ field ] = val || null;
+            }
+        });
+        object_['active'] = $('.client-update .form-control.client_active').is(':checked') ? 1 : 0;
+        object_['code'] = object_['code'] || '';
+
+        if( params && params.id ){
+            await save({
+                module: new Client(),
+                data: object_,
+            });
+        }else{
+            await create({
+                module: new Client(),
+                data: object_,
+            });
+        }
+
+        /*await doAjax({
+            module: module_,
+            action: action_,
+            type: 'post',
+            data: object_,
+            success_: function(result){
+                console.log( result )
+            }
+        })*/
+        
+    });
+
+
+});
+
+</script>

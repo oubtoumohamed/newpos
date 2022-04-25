@@ -1,0 +1,121 @@
+<div class="supplier-update pannel pannel-update pannel-supplier"> 
+    <div class="data">
+        <table class="table table-hover table-striped table-bordered">
+            <tr>
+                <td><label>trans_supplier.code</label></td>
+                <td>
+                    <input type="hidden" class="form-control" data-field="supplier_id" />
+                    <input type="text" class="form-control" data-field="supplier_code">
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_supplier.name</label></td>
+                <td>
+                    <input type="text" class="form-control validate" required="required" data-field="supplier_name">
+                    <span validation="trans_supplier.name_validation"></span>  
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_supplier.phone</label></td>
+                <td><input type="text" class="form-control" data-field="supplier_phone"></td>
+            </tr>
+            <tr>
+                <td><label>trans_supplier.fix</label></td>
+                <td><input type="text" class="form-control" data-field="supplier_fix"></td>
+            </tr>
+            <tr>
+                <td><label>trans_supplier.adress</label></td>
+                <td><input type="text" class="form-control" data-field="supplier_adress"></td>
+            </tr>
+            <tr>
+                <td><label>trans_supplier.email</label></td>
+                <td><input type="text" class="form-control" data-field="supplier_email"></td>
+            </tr>
+            <tr>
+                <td><label>trans_supplier.rc</label></td>
+                <td><input type="text" class="form-control" data-field="supplier_rc"></td>
+            </tr>
+            <tr>
+                <td><label>trans_supplier.cnss</label></td>
+                <td><input type="text" class="form-control" data-field="supplier_cnss"></td>
+            </tr>
+            <tr>
+                <td><label>trans_supplier.ifescale</label></td>
+                <td><input type="text" class="form-control" data-field="supplier_ifescale"></td>
+            </tr>
+            <tr>
+                <td><label>trans_supplier.ice</label></td>
+                <td><input type="text" class="form-control" data-field="supplier_ice"></td>
+            </tr>
+        </table>
+    </div>
+    <div class="actions">
+        <button type="button" class="btn btn-primary btn-sm" id="create_supplier"> 
+            <i class="fa fa-check"></i>
+            <span>trans_global.valider</span>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    
+jQuery(document).ready(async function(){
+
+    // modifier => remplire les input 
+    if( params && params.id ){
+        await find({
+            module: new Supplier(),
+            id: params.id,
+            success_: function(object){
+                for (const [key, value] of Object.entries(object)) {
+                    $('.supplier-update .form-control[data-field="supplier_'+ key+'"]').val( value );
+                }
+            }
+        });
+    }
+    //ajouter ou modifier supplier
+    $('#create_supplier').click( async function(){
+        
+        if( checkRequiredField('.supplier-update') ) return;
+
+        object_ = [];
+        $('.supplier-update .form-control').each(function(){
+            
+            var field = $(this).data('field');
+            var val = $(this).val();
+
+            if( field ){
+                field = field.replace('supplier_', '');
+                object_[ field ] = val || null;
+            }
+        });
+
+        if( params && params.id ){
+            await save({
+                module: new Supplier(),
+                data: object_,
+            });
+        }else{
+            await create({
+                module: new Supplier(),
+                data: object_,
+            });
+        }
+
+        /*await doAjax({
+            module: module_,
+            action: action_,
+            type: 'post',
+            data: object_,
+            success_: function(result){
+                console.log( result )
+            }
+        })*/
+        
+    });
+
+
+});
+
+</script>

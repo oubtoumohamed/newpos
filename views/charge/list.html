@@ -1,0 +1,78 @@
+<div class="charge-list pannel pannel-list pannel-charge">
+    <div class="pannel-header">
+        <div class="header-title">
+            <i class="fa fa-caret-right" aria-hidden="true"></i>
+            trans_charge.list
+        </div>
+        <div class="header-actions">
+            <button type="button" data-asmodal="true"  data-modalsize="md" data-permission="charge_UPDATE" loadView="charge,update" class="btn btn-xs pull-right">
+                <img src="../assets/icons/svg2/plus-blue.svg" class="btn_icon_xs" alt="icon action" />
+            </button>
+        </div>
+    </div>
+    <div class="data">
+        <table class="dataTable table table-hover table-striped table-bordered" id="charge-filter">
+            <thead>
+                <tr>
+                    <th>trans_charge.date</th>
+                    <th>trans_charge.montant</th>
+                    <th>trans_charge.user</th>
+                    <th>trans_charge.description</th>
+                    <th>trans_global.actions</th>
+                </tr>
+                <tr >
+                    <td style="width: 130px;"><input type="text" class="form-control date" name="date" /></td>
+                    <td style="width: 350px;"><input type="number" class="form-control" name="montant" /></td>
+                    <td><select id="charge_user_id" class="form-control" name="user_id"></select></td>
+                    <td><input type="text" class="form-control" name="description" /></td>
+                    <td>
+                        <button filter="true" filter-view=".charge-list" filter-form="#charge-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/search.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                        <button filter="false" filter-view=".charge-list" filter-form="#charge-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/cancel_.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div class="actions"></div>
+    </div>
+</div>
+
+<script>
+(async()=>{
+    await loadSelect({
+        module: new User(),
+        selectid: '#charge_user_id',
+        fieldtext: 'username',
+    });
+
+    $chrglist = new Charge();
+    $chrglist.table = `charges 
+                        LEFT JOIN users
+                            ON charges.user_id = users.id`;
+    $chrglist.select = 'charges.*, users.username as user';
+    $chrglist.joinwhere = '';
+    await loadList({
+        load: true,
+        view: '.charge-list',
+        module: $chrglist, 
+        success_: list_charge_callback
+    });
+})();
+
+function list_charge_callback(result){
+    $.each(result.data, function (ke, object) {
+        $('.charge-list .dataTable tbody').append(
+            '<tr>' +
+            ' <td>'+ ( dateFomat(object.date) || '' )+'</td> ' +
+            ' <td class="money">'+ ( tofixed2(object.montant) || '' )+'</td> ' +
+            ' <td>'+ ( object.user || '' )+'</td> ' +
+            ' <td colspan="2" style="text-align: left;">'+ ( object.description || '' )+'</td> ' +
+            ' </tr>');
+    });
+}
+</script>

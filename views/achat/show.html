@@ -1,0 +1,96 @@
+<div class="calc row" id="cmnd_show">
+
+  <table class="table table-hover table-striped table-bordered">
+    <tbody>
+      
+      <tr> 
+        <td><b>Montant</b></td> <td class="money"> <b class="order_montant"></b> DH. </td> 
+        <td><b>Référence</b></td> <td class="order_reference"></td> 
+        <td><b>Date</b></td> <td class="order_date"></td> 
+      </tr>
+      <tr>
+        <td><b>Payée</b></td> <td class="money"> <b class="order_paye"></b> DH. </td> 
+        <td><b>Client</b></td> <td class="order_client"></td> 
+        <td><b>Date de credit</b></td> <td class="order_creditdate"></td> 
+      </tr>
+      <tr> 
+        <td><b>Reste</b></td> <td class="money"> <b class="order_rest"></b> DH. </td> 
+        <td><b>Employé</b></td> <td class="order_employee"></td> 
+        <td><b>Notes</b></td> <td lass="order_notes"></td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <hr>
+
+  <table id="cmnd_products" class="table table-hover table-striped table-bordered">
+    <thead>
+      <tr>
+        <th>Référence</th>
+        <th>Designation</th>
+        <th>Prix Achat</th>
+        <th>Prix U.</th>
+        <th>Qté.</th>
+        <th>Remise</th>
+        <th class="text-center">Montant</th>
+        <th class="text-center">Qté avoirs</th>
+        <th class="text-center">Montant avoirs</th>
+      </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+  </table>
+
+  <div class="clearfix"></div>
+
+</div>
+
+
+
+<script type="text/javascript">
+$(document).ready( async function(){
+  $('#modalView .modal-header').html('<button type="button" class="close" data-dismiss="modal">&times;</button><h5 class="modal-title">Affichage Commande</h5>');
+
+  if( params && params.id ){
+    await find({
+      module: new Order(),
+      id: params.id,
+      success_: async function(order){
+        $('#cmnd_show .order_reference').html( order.reference );
+        $('#cmnd_show .order_date').html( order.date ? dateFomat(order.date) : '-' );
+        $('#cmnd_show .order_employee').html( order.employee || '-' );
+        $('#cmnd_show .order_client').html( order.client || '-' );
+        $('#cmnd_show .order_creditdate').html( order.creditdelay ? dateFomat(order.creditdelay) : '-' );
+        $('#cmnd_show .order_notes').html( order.notes );
+        $('#cmnd_show .order_montant').html( tofixed2(order.amount) );
+        $('#cmnd_show .order_paye').html( tofixed2( order.payed ) );
+        $('#cmnd_show .order_rest').html( tofixed2( order.amount - order.payed ) );
+
+        await new Order().products( params.id )
+        .then(function(products) {
+          $.each( products, function(k, prd){
+            $('#cmnd_show #cmnd_products tbody').append(
+              `<tr>
+                <td>${ prd.reference }</td>
+                <td>${ prd.name }</td>
+                <td class="money">${ tofixed2( prd.purchase_price ) }</td>
+                <td class="money">${ tofixed2( prd.price ) }</td>
+                <td class="text-center">${ prd.qty }</td>
+                <td class="text-center">${ prd.discount } %</td>
+                <td class="money">${ tofixed2( prd.qty * prd.price ) } DH</td>
+
+                <td class="text-dark pe-3 money">${ prd.qty_avoired || 0 }</td>
+                <td class="text-dark pe-3 money">${ tofixed2( prd.price_avoired, 2, ',', ' ') } DH</td>
+              </tr>`
+            );
+          });
+        })
+        .catch(function (err){ });
+      }
+    });
+  }
+
+});
+</script>

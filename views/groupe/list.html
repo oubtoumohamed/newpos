@@ -1,0 +1,76 @@
+<style>
+    td
+    {
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
+<div class="groupe-list pannel pannel-list pannel-groupe">
+    <div class="pannel-header">
+        <div class="header-title">
+            <i class="fa fa-caret-right" aria-hidden="true"></i>
+            trans_groupe.list
+        </div>
+        <div class="header-actions">
+            <button type="button" data-asmodal="true"  data-modalsize="md" data-permission="GROUPE_UPDATE" loadView="groupe,update" class="btn btn-xs pull-right">
+                <img src="../assets/icons/svg2/plus-blue.svg" class="btn_icon_xs" alt="icon action" />
+            </button>
+        </div>
+    </div>
+    <div class="data">
+        <table class="dataTable table table-hover table-striped table-bordered" id="groupe-filter">
+            <thead>
+                <tr>
+                    <th>trans_groupe.name</th>
+                    <th>trans_groupe.roles</th>
+                    <th>trans_global.actions</th>
+                </tr>
+                <tr >
+                    <td><input type="text" class="form-control" name="name" /></td>
+                    <td><input type="text" class="form-control" name="roles" /></td>
+                    <td>
+                        <button filter="true" filter-view=".groupe-list" filter-form="#groupe-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/search.svg" class="btn_icon_xs" alt="icon action" />
+                      </button>
+                      <button filter="false" filter-view=".groupe-list" filter-form="#groupe-filter .form-control" type="button" class="btn btn-default btn-xs">
+                          <img src="../assets/icons/svg2/cancel_.svg" class="btn_icon_xs" alt="icon action" />
+                      </button>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div class="actions"></div>
+    </div>
+</div>
+
+<script>
+(async()=>{
+
+    loadSelect(true,'groupe', '.groupe-list .groupe_id', 'id', 'name');
+    loadList({
+        load: true,
+        view: '.groupe-list',
+        module: new Groupe(), 
+        success_: list_groupe_callback
+    });
+})();
+
+function list_groupe_callback(result){
+    $.each(result.data, function (ke, object) {
+        grps = "";
+
+        //object.groupes.forEach(function(o){ grps += toEdit("groupe", "update" ,o.id, o.name)  + '<br>' });
+        $('.groupe-list .dataTable tbody').append(
+            '<tr>' +
+            ' <td>'+ (object.name || '' )+'</td> ' +
+            ' <td>'+ (object.roles || '' )+'</td> ' +
+            /*' <td style="text-align: left; width: 70%">'+ (object.roles ? object.roles.replace(/,/g, ' &nbsp;&nbsp;-&nbsp;&nbsp; ') : '') +'</td> ' +*/
+            ' <td> ' + listActions('groupe', object.id) + ' </td> ' +
+            ' </tr>');
+    });
+}
+</script>

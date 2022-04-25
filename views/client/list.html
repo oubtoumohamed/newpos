@@ -1,0 +1,90 @@
+<div class="client-list pannel pannel-list pannel-client">
+    <div class="pannel-header">
+        <div class="header-title">
+            <i class="fa fa-caret-right" aria-hidden="true"></i>
+            trans_client.list
+        </div>
+        <div class="header-actions">
+            <button type="button" data-asmodal="true"  data-modalsize="md" data-permission="CLIENT_UPDATE" loadView="client,update" class="btn btn-xs pull-right">
+                <img src="../assets/icons/svg2/plus-blue.svg" class="btn_icon_xs" alt="icon action" />
+            </button>
+        </div>
+    </div>
+    <div class="data">
+        <table class="dataTable table table-hover table-striped table-bordered" id="client-filter">
+            <thead>
+                <tr>
+                    <th>trans_client.code</th>
+                    <th>trans_client.name</th>
+                    <th>trans_client.type</th>
+                    <th>trans_client.phone</th>
+                    <th>trans_client.plafond</th>
+                    <th>trans_client.active</th>
+                    <th>trans_global.actions</th>
+                </tr>
+                <tr >
+                    <td><input type="text" class="form-control" name="code" /></td>
+                    <td><input type="text" class="form-control" name="name" /></td>
+                    <td>
+                        <select class="form-control" name="type">
+                            <option value=""></option>
+                            <option value="personn">trans_client.type_personn</option>
+                            <option value="company">trans_client.type_company</option>
+                            <option value="prospect">trans_client.type_prospect</option>
+                            <option value="partner">trans_client.type_partner</option>
+                            <option value="reseller">trans_client.type_reseller</option>
+                            <option value="vendor">trans_client.type_vendor</option>
+                            <option value="other">trans_client.type_other</option>
+                        </select>
+                    </td>
+                    <td><input type="text" class="form-control" name="phone" /></td>
+                    <td><input type="number" class="form-control" name="plafond" /></td>
+                    <td>
+                        <select class="form-control" name="active">
+                            <option value=""></option>
+                            <option value="1">trans_global.oui</option>
+                            <option value="0">trans_global.no</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button filter="true" filter-view=".client-list" filter-form="#client-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/search.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                        <button filter="false" filter-view=".client-list" filter-form="#client-filter .form-control" type="button" class="btn btn-default btn-xs">
+                            <img src="../assets/icons/svg2/cancel_.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div class="actions"></div>
+    </div>
+</div>
+
+<script>
+(async()=>{
+    await loadList({
+        load: true,
+        view: '.client-list',
+        module: new Client(), 
+        success_: list_client_callback
+    });
+})();
+
+function list_client_callback(result){
+    $.each(result.data, function (ke, object) {
+        $('.client-list .dataTable tbody').append(
+            '<tr>' +
+            ' <td>'+ (object.code || '' )+'</td> ' +
+            ' <td>'+ (object.name || '' )+'</td> ' +
+            ' <td>'+ (__('client.type_'+object.type) || '' )+'</td> ' +
+            ' <td>'+ (object.phone || '' )+'</td> ' +
+            ' <td>'+ (object.plafond || '' )+'</td> ' +
+            ' <td>'+ badge(object.active)+'</td> ' +
+            ' <td> ' + listActions('client', object.id) + ' </td> ' +
+            ' </tr>');
+    });
+}
+</script>

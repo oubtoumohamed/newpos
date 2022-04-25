@@ -1,0 +1,78 @@
+<div class="user-list pannel pannel-list pannel-user"> 
+    <div class="title">
+        <i class="fa fa-caret-right" aria-hidden="true"></i>
+        trans_user.list
+        <button type="button" data-asmodal="true" data-permission="USER_UPDATE" loadView="user,update" class="btn btn-xs pull-right">
+            <img src="../assets/icons/svg2/plus-blue.svg" class="btn_icon_xs" alt="icon action" />
+        </button>
+    </div>
+    <div class="data">
+        <table class="dataTable table table-hover table-striped table-bordered" id="user-filter">
+            <thead>
+                <tr>
+                    <th>trans_user.firstname</th>
+                    <th>trans_user.lastename</th>
+                    <th>trans_user.email</th>
+                    <!--  <th>trans_user.role</th>-->
+                    <th>trans_user.fonction</th>
+                    <th>trans_global.actions</th>
+                </tr>
+                <tr >
+                    <td><input type="text" class="form-control" name="firstname" /></td>
+                    <td><input type="text" class="form-control" name="lastename" data-operation="=" /></td>
+                    <td><input type="text" class="form-control" name="email" /></td>
+                    <!--<td>
+                        <select class="form-control" id="role" name="role">
+                            <option></option>
+                            <option value="Admin">ADMIN</option>
+                            <option value="User">USER</option>
+                        </select>
+                    </td>-->
+                    <td><select class="form-control groupe_id" name="groupe_id"></select></td>                    
+                    <td>
+                        <button filter="true"  filter-view=".user-list" filter-form="#user-filter .form-control" type="button" class="btn btn-default btn-xs" >
+                            <img src="../assets/icons/svg2/search.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                        <button filter="false"  filter-view=".user-list" filter-form="#user-filter .form-control" type="button" class="btn btn-default btn-xs" >
+                            <img src="../assets/icons/svg2/cancel_.svg" class="btn_icon_xs" alt="icon action" />
+                        </button>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div class="actions"></div>
+    </div>
+    
+</div>
+
+<script>
+(async()=>{
+
+    loadSelect(true,'groupe', '.user-list .groupe_id', 'id', 'name');
+    loadList({
+        load: true,
+        view: '.user-list',
+        module: new User(), 
+        success_: list_user_callback
+    });
+})();
+
+function list_user_callback(result){
+    $.each(result.data, function (ke, object) {
+        grps = "";
+
+        //object.groupes.forEach(function(o){ grps += toEdit("groupe", "update" ,o.id, o.name)  + '<br>' });
+        $('.user-list .dataTable tbody').append(
+            '<tr>' +
+            ' <td>'+ (object.firstname || '' )+'</td> ' +
+            ' <td>'+ (object.lastename || '' ) +'</td> ' +
+            ' <td>'+ (object.email || '' ) +'</td> ' +
+            /*' <td>'+ (object.role ? object.role : '' ) +'</td> ' +*/
+            ' <td>'+ grps +'</td> ' +
+            ' <td> ' + listActions('user', object.id) + ' </td> ' +
+            ' </tr>');
+    });
+}
+</script>

@@ -1,0 +1,83 @@
+<div id="configcontainer">
+	<img src="../assets/img/logo-pos.png" class="logo" style="width: 400px">
+	<div style="font-weight: bold; color: red; text-align: center; padding: 10px;" id="errors"></div>
+	<div class="config-update pannel pannel-update pannel-config"> 
+	    <div class="title">
+	        <span>Configuration</span>
+	    </div>
+	    <div class="data">
+	        <div class=""> 
+	            <table class="table table-hover table-striped table-bordered">
+	                <tr>
+	                    <td width="120px"><label>URL : </label></td>   
+	                    <td><input type="url" class="form-control" id="appurl" /></td>
+	                </tr>
+	                <tr>
+	                    <td><label>Nom : </label></td>   
+	                    <td><input type="text" class="form-control" id="clientname" /></td>
+	                </tr>
+	            </table>
+	        </div>
+	    </div>
+	    <div class="actions">
+	        <button type="button" class="btn btn-primary" id="saveconfig">
+	            <i class="fa fa-floppy-o" aria-hidden="true"></i>
+	            <span>trans_global.valider</span>
+	        </button>
+	    </div>
+	</div>
+</div>
+
+<style type="text/css">
+body{
+	background: #fff !important;
+}
+#configcontainer{
+	width: 30%;
+	margin: 5% auto;
+}
+#configcontainer .logo{
+	margin: 80px auto;
+	display: block;
+}
+</style>
+
+<script>
+
+jQuery(document).ready(async function(){
+
+    $('#saveconfig').click(async function(){
+		$('#errors').text("");
+		var appurl = $('#appurl').val();
+		var clientname = $('#clientname').val();
+		var linkvalid = false;
+
+
+		if( !appurl ){
+			showMessage({ icon:'warning', title: 'URL is required.' });
+		}else if( !clientname ){
+			showMessage({ icon:'warning', title: 'Name is required.' });
+		}else{
+
+			var resu = await $.ajax({
+				url: $('#appurl').val() + "api/iswork",
+				success: function(res){
+					if( res.iswork == true){
+
+						var content = `{\n "APP_URL":"${ appurl }",\n "CLIENT_NAME":"${ clientname }"\n}`;
+						
+						fs.writeFileSync(configPath, content);
+						window.location.reload();
+					}else{
+						showMessage({ icon:'warning', title: 'Invalid URL :( <br> please try again.' });
+					}
+				},
+				error: function(res){
+					showMessage({ icon:'warning', title: 'Invalid URL :( <br> please try again.' });
+				}
+			});
+		}
+
+    });
+});
+</script>

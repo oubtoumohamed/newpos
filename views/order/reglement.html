@@ -1,0 +1,175 @@
+<div class="calc row">
+
+  <div class="col-md-5">
+
+    <table class="table table-hover table-striped table-bordered">
+      <tbody>
+        
+        <tr> 
+          <td><b>Référence</b></td> <td class="_order_reference"></td> 
+        </tr>
+        <tr> 
+          <td><b>Employé</b></td> <td class="_order_employee"></td> 
+        </tr>
+        <tr> 
+          <td><b>Client</b></td> <td class="_order_client"></td> 
+        </tr>
+        <tr> 
+          <td><b>Date</b></td> <td class="_order_date"></td> 
+        </tr>
+        <tr> 
+          <td><b>Montant Total</b></td> <td class="_order_montant money" style="font-weight: bold;"></td> 
+        </tr>
+        <tr> 
+          <td><b>Montant Payée</b></td> <td class="_order_payed money" style="color: green;"></td> 
+        </tr>
+        <tr> 
+          <td><b>Montant Resté</b></td> <td class="_order_rest money" style="color: red;"></td> 
+        </tr>
+        <tr> 
+          <td><b>Date de credit</b></td> <td class="_order_creditdate"></td> 
+        </tr>
+        <tr>
+          <td><b>Notes</b></td> <td class="_order_notes"></td>
+        </tr>
+
+      </tbody>
+    </table>
+    
+  </div>
+  <div class="col-md-2">
+  </div>
+  <div class="col-md-5">
+    
+    <table class="table table-striped table-bordered" id="reg_table" style="background: #9999997d;">
+      <tbody>
+        
+        <tr> 
+          <td colspan="2" style="text-align: center;"><b>Ajouter Réglement</b>
+        </tr>
+        <tr> 
+          <td><b>Montant</b></td> 
+          <td>
+            <input type="number" step="0.01" id="reg_montant" class="form-control validate" required="required" placeholder="0.00">
+          </td> 
+        </tr>
+        <tr> 
+          <td><b>Type</b></td> 
+          <td>
+            <select id="reg_type" class="form-control validate" required="required">
+              <option value="espece">Espèce</option>
+              <option value="cheque">Cheque</option>
+            </select>
+          </td> 
+        </tr>
+        <tr> 
+          <td><b>Commentaire</b></td> 
+          <td>
+            <textarea id="reg_comment" class="form-control"></textarea>
+          </td> 
+        </tr>
+        <tr> 
+          <td colspan="2" style="text-align: center; padding: 20px;">
+            <button id="add_new_reglement" class="btn btn-md btn-primary"><i class="fa fa-plus"></i>&nbsp;&nbsp; Ajouter Réglement</button>
+          </td> 
+        </tr>
+
+      </tbody>
+    </table>
+    <br>
+  </div>
+
+  <div class="col-md-12">
+    <table id="cmnd_reglements" class="table table-hover table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Montant</th>
+          <th>Type</th>
+          <th>Employé</th>
+          <th>Commentaire</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="clearfix"></div>
+
+</div>
+
+
+
+<script type="text/javascript">
+$(document).ready( async function(){
+  $('#modalView .modal-header').html('<h5 class="modal-title">Réglements</h5><button type="button" class="btn-close" data-bs-dismiss="modal">&times;</button>');
+
+  if( params && params.id ){
+
+    $('#add_new_reglement').click(async function(){
+        
+        if( checkRequiredField('#reg_table') ) return;
+        //
+        var object_ = {};
+        object_.montant = $('#reg_montant').val();
+        object_.type    = $('#reg_type').val();
+        object_.commantaire = $('#reg_comment').val();
+        object_.order_id = params.id;
+        object_.user_id = auth().id;
+
+        var data = await new Order().addReglement( params.id, object_)
+        .then( async (order)=>{
+          if( order && order.id ){
+            await loadView({
+              module: "order",
+              action: "reglement",
+              params: {
+                id: order.id,
+              },
+              asmodal: true,
+              modalSize: "xl",
+            });
+
+            $('#validatebarcodeSearch').trigger('click');
+          }
+        });
+    });
+
+    await new Order().find( params.id )
+    .then( async (order)=>{
+
+        if( order.amount <= order.payed ){
+          $('#reg_table').hide();
+        }
+
+        $('._order_reference').html( order.reference + ' <b>( ' + ( order.reference2 || '') + ' )</b>' );
+        $('._order_date').html( order.date ? dateFomat(order.date) : '-' );
+        $('._order_employee').html( order.employee || '-' );
+        $('._order_client').html( order.client || '-' );
+        $('._order_montant').html( tofixed2(order.amount) + ' DH' );
+        $('._order_payed').html( tofixed2(order.payed) + ' DH' );
+        $('._order_rest').html( tofixed2(order.amount - order.payed) + ' DH' );
+        $('._order_creditdate').html( order.creditdelay ? dateFomat(order.creditdelay) : '-' );
+        $('._order_notes').html( order.notes );
+    });
+
+    await new Order().reglements( params.id )
+    .then( async (result)=>{
+      $.each( result, function(k, reg){
+        $('#cmnd_reglements tbody').append(
+          `<tr>
+            <td class="text-center">${ dateTimeFomat(reg.created_at) }</td>
+            <td class="money">${ tofixed2( reg.montant ) } DH</td>
+            <td class="text-center">${ reg.type }</td>
+            <td class="text-center">${ reg.employee || '-' }</td>
+            <td>${ reg.commantaire || '' }</td>
+          </tr>`
+        );
+      });
+    });
+  }
+
+});
+</script>

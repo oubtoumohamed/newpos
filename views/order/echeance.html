@@ -1,0 +1,148 @@
+
+<div class="container-xl pt-3 pe-5 ps-5 pb-3">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+          <div class="col">
+            <div class="d-flex">
+                <div class="ms-0">
+                    <h2 class="page-title"> Échéances </h2>
+                    <!-- Page pre-title -->
+                    <div class="page-pretitle">Les commandes ont un délai de paiement</div>
+                </div>
+            </div>
+          </div>
+          <!-- Page title actions -->
+          <div class="col-auto ms-auto d-print-none">
+            <div class="btn-list">
+                <div class="d-flex">
+                    <input type="text" class="form-control" id="barcodeSearch" value="" placeholder="Recherche ..." />
+                    <button class="btn btn-primary btn-sm" id="validatebarcodeSearch"><i class="fa fa-search"></i></button>
+                </div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <div class="mt-4 orders bg-white border">
+        <!--begin::Table-->
+        <div class="table-responsive">
+            <table  class="table table-striped table-hover bg-white table-bordered">
+                <thead>
+                    <tr class="border-bottom fs-5 fw-bolder">
+                        <th>Référence</th>
+                        <th>Employé</th>
+                        <th>Client</th>
+                        <th>Date</th>
+                        <th>Montant</th>
+                        <th>Payé</th>
+                        <th>Rest</th>
+                        <th>Date de credit</th>
+                        <th>Notes</th>
+                        <th style="width: 100px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="dataTable"></tbody>
+            </table>
+        </div>
+        <!--End::Table-->
+        <div class="actions"></div>
+    </div>
+</div>
+
+
+<script>
+
+$(document).ready(async function(){
+    
+    $('#validatebarcodeSearch').click(async function(){
+        var reference = $('#barcodeSearch').val();
+
+        $orders = new Order();
+        $orders.orderby = "creditdelay";
+        $orders.orderdir = "DESC";
+
+        $orders.select = "orders.*, clients.name as client, concat( users.firstname, ' ', users.lastename) as employee";
+        $orders.table = `orders 
+                            LEFT JOIN users 
+                                ON orders.user_id = users.id
+                            LEFT JOIN clients 
+                                ON orders.client_id = clients.id`;
+        
+        $where = ` and amount > payed and reference like '%${ reference }%' and orders.type not like 'bc' and state = 'validated' and creditdelay <= '${ getdate('Y-m-d', {d: 5}) }'`;
+
+
+        await loadList({
+            load: true,
+            view: '.orders',
+            module: $orders,
+            filter: $where,
+            success_: ordercallback
+        });
+
+    }).trigger('click');
+
+})
+.off('click','.paye')
+.on('click','.paye', function(){
+
+    var order_id = $(this).attr('order_id');
+    var tr = $(this).closest('.tr_order');
+
+    if( !order_id )
+        return;
+
+    showMessage({
+        title: "Marque la commande comme payée ?",
+        icon: "warning",
+        showCancelButton: true,
+        cancelButtonText: 'trans_global.annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            return doAjax({
+                module: 'pos/order/'+order_id,
+                action: 'payee',
+                success_: function(order){
+                    if( order.state == "payed" ){
+                        showMessage({
+                            title : 'La commande "'+order.reference+'"<br> marque comme payée',
+                            icon : 'success'
+                        });
+                        tr.remove();
+                    }
+                }
+            });
+        }
+    });
+
+});
+    
+function ordercallback(result){
+    $.each(result.data, function(ke, order){
+
+        $('.orders .dataTable').append(
+            `<tr class="tr_order">
+                <td class="text-center">${ order.reference }</td>
+                <td class="text-center">
+                    ${ order.employee || '-' }
+                </td>
+                <td class="text-center">
+                    ${ order.client || '-' }
+                </td>
+                <td class="text-center">
+                    ${ dateFomat( order.date ) }
+                </td>
+                <td class="text-end"><b>${ tofixed2( order.amount ) }</b></td>
+                <td class="text-end"><b>${ tofixed2( order.payed ) }</b></td>
+                <td class="text-end"><b>${ tofixed2( order.amount - order.payed ) }</b></td>
+                <td class="text-center">
+                    ${ order.creditdelay ? dateFomat(order.creditdelay) : '' }
+                </td>
+                <td class="text-center">${ order.notes }</td>
+                <td class="text-end">
+                    <button order_id="${ order.id || '' }" class="btn btn-sm btn-success paye"><i class="fa fa-money"></i> &nbsp;Payée</button>
+                </td>
+            </tr>`);
+    });
+}
+</script>

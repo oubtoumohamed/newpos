@@ -1,0 +1,443 @@
+<div class="page-body">
+  <div class="container-xl">
+    <div class="row g-4">
+      <div class="col-8">
+
+        <div class="card-header border-0 pt-0 ps-0">
+          <ul class="nav nav-pills" id="categoriesfilter">
+            <li class="">
+              <input type="text" class="form-control" id="termSearch" value="" placeholder="Recherche ..." />
+            </li>
+            <li class="nav-item active cat-item" data-catid="">
+              <a data-toggle="tab" >
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-adjustments-horizontal" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                  <circle cx="14" cy="6" r="2"></circle>
+                  <line x1="4" y1="6" x2="12" y2="6"></line>
+                  <line x1="16" y1="6" x2="20" y2="6"></line>
+                  <circle cx="8" cy="12" r="2"></circle>
+                  <line x1="4" y1="12" x2="6" y2="12"></line>
+                  <line x1="10" y1="12" x2="20" y2="12"></line>
+                  <circle cx="17" cy="18" r="2"></circle>
+                  <line x1="4" y1="18" x2="15" y2="18"></line>
+                  <line x1="19" y1="18" x2="20" y2="18"></line>
+                </svg>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="row-cards" id="product_cards">
+          <div class="row dataTable mb-3"></div>
+          <div class="actions"></div>
+        </div>
+
+      </div>
+      <div class="col-4">
+
+        <div class="cart">
+          <div class="container_">
+            <div class="table-responsive">
+            </div>
+            <!--begin::Table-->
+            <div class="table-responsive border-bottom empty" style="height: 84vh; overflow-y: scroll; border-bottom: solid 1px #ccc;">
+              <table id="cartTable" class="table table-vcenter card-table table-striped">
+                <thead>
+                  <tr class="border-bottom fs-5 fw-bolder">
+                    <th class="name">Produit</th>
+                    <th class="qty">Qté.</th>
+                    <th class="price">Prix U.</th>
+                    <th class="montant">Montant</th>
+                  </tr>
+                </thead>
+                <tbody class="">
+                  <tr class="text-gray-600 text-end">
+                    <td class="cart-empty"><h5><i class="fa fa-shopping-cart" aria-hidden="true"></i> &nbsp; Le panier est vide</h5></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!--End::Table-->
+            <div class="total-actions row" style="background: #eee;">
+              <div class="total col-md-6">
+                <!--button class="toggle-cart btn btn-default"><i class="fa fa-chevron-up" aria-hidden="true"></i></button-->
+                Total : <span class="cart-total">0.00</span> DH.
+              </div>
+              <div class="btns-actions col-md-6">
+                <button disabled="" id="emptyCart" class="btn btn-danger" >Vider Panier</button>
+                <button disabled="" id="checkoutCart" class="btn btn-success" >Valider Panier</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+
+var maxdiscount = configoptions.maxdiscount; // 20 %
+
+$listproducts = [];
+$products_with_price_down = [];
+$cart = [];
+order_type = 'bl';
+var totalCart = 0;
+var scannerInput = null;
+var $categorie_id = null;
+
+$(document).ready( async function(){
+
+  $tm = new Date().getTime();
+
+  // TODO
+  /*await doAjax({
+    module: 'pos',
+    action: 'categories',
+    success_: function(result){
+      $.each(result, function(key, cat) {
+        $('#categoriesfilter').append(`<li class="cat-item" data-catid="${ cat.id }">${ cat.picture ? '<img src="'+cat.picture+'" />' : '' } <a data-toggle="tab"> ${ cat.name }</a></li>`);
+      });
+    }
+  });*/
+  $cats = new Categorie();
+  $cats.fields = 'id, name';
+  $cats.limit = 0;
+
+  await query({
+    module: $cats,
+    success_: function(result){
+      log(result)
+      $.each(result, function(key, cat) {
+        $('#categoriesfilter').append(`<li class="cat-item" data-catid="${ cat.id }">${ cat.picture ? '<img src="'+cat.picture+'" />' : '' } <a data-toggle="tab"> ${ cat.name }</a></li>`);
+      });
+    }
+  });
+
+  $('#termSearch').change(async function() {
+
+    $prdlist = new Product();
+    $prdlist.limit = 30;
+
+    await loadList({
+      load: true,
+      view: '#product_cards',
+      module: $prdlist, 
+      filter:  ` and ( reference like '%${ $(this).val() }%' or barcode like '%${ $(this).val() }%' or name like '%${ $(this).val() }%' ) ${ $categorie_id ? ' and categorie_id ='+$categorie_id : '' }`,
+      success_: listproductcallback
+    });
+  }).trigger('change');
+
+  console.log('Load categories and product time : ', new Date().getTime() - $tm, ' ms');
+
+  $('#emptyCart').click(function() {
+    showMessage({
+      title: 'trans_global.confirm_delete',
+      text: 'trans_global.confirm_deletetext',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#555',
+      confirmButtonText: 'trans_global.oui',
+      cancelButtonText: 'trans_global.annuler'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $cart = [];
+        updateCart();
+      }
+    })
+  });
+  
+  $('#checkoutCart').click(async function() {
+
+    if( $products_with_price_down.length ){
+
+      var $html__ = "";
+
+      $products_with_price_down.forEach(function(k, v){ 
+        $html__ += $listproducts['prd-'+k].reference + " " + $listproducts['prd-'+k].name + " <br>";
+      });
+
+      showMessage({
+        title: 'Produits Hors Prix ??',
+        html: $html__,
+        icon: 'warning',
+        showCancelButton: false,
+      }).then((result) => { });
+      
+    }else{
+      await loadView({
+        module: 'checkout',
+        asmodal: true,
+        modalSize: 'lg'
+      });
+      $(this).blur();
+      $('#modalView .modal-header .modal-title').text('Créer la commande');
+    }
+
+  });
+
+  $('#modalView').on('hidden.bs.modal', function () {
+    if( scannerInput != null )
+      scanner.input = scannerInput;  
+  });
+
+})
+// TODO
+.off('click', '.cat-item')
+.on('click', '.cat-item', async function(event){
+  $categorie_id = $(this).data('catid');
+  $('#termSearch').trigger('change');
+})
+.off('click', '.addToCart')
+.on('click', '.addToCart', function(event){
+  var pid = $(this).data('id');
+  var achatid = $(this).data('achatid');
+  
+  addToCart(pid, achatid);
+
+  if( configoptions.multiprice && achatid ){
+    $('#modalPrices .modal-body #prd-'+pid).remove();
+    if( $('#modalPrices .modal-body .prd').length == 0 ){
+      $('#modalPrices').modal('hide');
+    }
+  }
+})
+.off('click', '.deleteProduct')
+.on('click', '.deleteProduct', function(event){
+  var pid = $(this).data('id');
+  if( pid && $cart['prd-'+pid] ){
+    delete $cart['prd-'+pid];
+
+    updateCart();
+  }
+})
+.off('click', '.qtyplus')
+.on('click', '.qtyplus', function(event){
+  var pid = $(this).data('id');
+  if( pid && $cart['prd-'+pid] ){
+    $cart['prd-'+pid].quantity++;
+    updateCart();
+  }
+})
+.off('click', '.qtyminus')
+.on('click', '.qtyminus', function(event){
+  var pid = $(this).data('id');
+  if( pid && $cart['prd-'+pid] ){
+    if( $cart['prd-'+pid].quantity > 1 ){
+      $cart['prd-'+pid].quantity--;
+      updateCart();
+    }
+  }
+})
+.off('change', '.updatePrice')
+.on('change', '.updatePrice', function(event){
+  var pid = $(this).data('id');
+
+  var $indx_ = $products_with_price_down.indexOf(pid);
+  if( $indx_ > -1 ){
+    $products_with_price_down.splice($indx_, 1);
+  }  
+
+  var price = parseFloat( $(this).val() );
+  var purchase_price = parseFloat( $(this).data('purchase_price') );
+
+  if( price < purchase_price ){
+    //price = purchase_price;
+    $products_with_price_down.push(pid);
+  }
+
+  if( pid && $cart['prd-'+pid] && price > 0 ){
+    $cart['prd-'+pid].price = price;
+    $cart['prd-'+pid].achat = -2;
+  }
+  updateCart();
+})
+.off('change', '.updatename')
+.on('change', '.updatename', function(event){
+  var pid = $(this).data('id');
+  var name = $(this).val();
+  if( name ){
+    $cart['prd-'+pid].name = name;
+  }
+  updateCart();
+})
+.off('change', '.updateDiscount')
+.on('change', '.updateDiscount', function(event){
+  var pid = $(this).data('id');
+  var discount = parseFloat( $(this).val() );
+
+  if( discount > maxdiscount ){
+    showMessage({
+      title: 'trans_global.maxdiscount',
+      html: __('global.maxdiscount_text', [maxdiscount]),
+      icon: 'warning',
+    });
+    $(this).val(0);
+  }else{
+    if( pid && $cart['prd-'+pid] && discount >= 0 ){
+      $cart['prd-'+pid].discount = discount;
+    }
+  }
+  
+  updateCart();
+})
+.off('click', '.showdiscount')
+.on('click', '.showdiscount', function(event){
+  var target = $(this).data('target');
+  if( target )
+    $(target).toggle('slow');
+});
+
+
+function addToCart(pid, achatId=null) {
+  if( pid && $listproducts['prd-'+pid] ){
+
+    var qty = 1;
+    var product = $listproducts['prd-'+pid];
+
+    if( configoptions.multiprice && achatId != null && $cart['prd-'+pid] ){
+      // product ready in cart just update price with achat id
+      if( achatId == -1 ){
+        $cart['prd-'+pid].price = parseFloat( product.price );
+        $cart['prd-'+pid].achat = achatId;
+
+      }else if( achatId == -2 ){
+        //$cart['prd-'+pid].price = parseFloat( product.price );
+        $cart['prd-'+pid].achat = achatId;
+        return;
+      }else{
+        $.each( product.prices, function(k, price){
+          if( achatId == price.id ){
+            $cart['prd-'+pid].price = parseFloat( price.prix_vent );
+            $cart['prd-'+pid].achat = achatId;
+            return false;
+          }
+        });
+      }
+
+      updateCart();
+
+      return;
+    }
+
+    var prd = {
+      'id' : product.id,
+      'reference' : product.reference,
+      'name' : product.name,
+      'price' : product.price,
+      'purchase_price' : product.purchase_price,
+      'quantity' : qty,
+      'discount' : 0,
+      'achat' : achatId || 0,
+    };
+    
+    if( $cart['prd-'+pid] ){
+      prd = $cart['prd-'+pid];
+      prd.quantity = prd.quantity + 1;
+      prd.achat = prd.achat;
+    }
+
+    if( configoptions.multiprice && product.prices && achatId == null && prd.achat == 0 ){
+      $prices_html = '';
+
+      $.each( product.prices, function(k, price){
+        $prices_html += `<div class="addToCart btn btn-sm btn-default" data-id="${ product.id }" data-achatid="${ price.id }" ><span>${ tofixed2(price.prix_vent) } DH</span><span> ( ${ price.quantite - price.quantite_vendu } pcs )</span></div>`;
+      });
+
+      if( $prices_html != ''){
+        if( $('#modalPrices .modal-body #prd-'+prd.id).length == 0 )
+          $('#modalPrices .modal-body').append('<div class="prd" id="prd-'+prd.id+'">'+prd.name+'<div class="prices"></div></div>');
+
+        $tmp_prices = `<div class="addToCart btn btn-sm btn-default active" data-id="${ product.id }" data-achatid="-1" ><span>${ tofixed2(product.price) } DH - Origine </span></div>`;
+
+        if( prd.price != product.price )
+          $tmp_prices += `<div class="addToCart btn btn-sm btn-default" data-id="${ product.id }" data-achatid="${ prd.achat || -2 }" ><span>${ tofixed2(prd.price) } DH - Spécifique</span></div>`;
+
+        $('#modalPrices .modal-body #prd-'+prd.id+' .prices').html( $tmp_prices + $prices_html);
+        $('#modalPrices').modal('show');
+      }
+    }
+
+    $cart['prd-'+pid] = prd;
+
+    updateCart();
+  }
+}
+
+function updateCart() {
+
+  totalCart = 0;
+  $('#cartTable tbody').html('');
+  $('#emptyCart').attr('disabled','disabled');
+  $('#checkoutCart').attr('disabled','disabled');
+
+  if( Object.keys($cart).length == 0 ){
+    $('#cartTable tbody').html('<tr><td class="cart-empty"><h5><i class="fa fa-shopping-cart" aria-hidden="true"></i> &nbsp; Le panier est vide</h5></td></tr>');
+    $('.toggle-cart').trigger('click');
+    $('.cart .table-responsive').addClass('empty');
+  }else{
+    $('#emptyCart').removeAttr('disabled');
+    $('#checkoutCart').removeAttr('disabled');
+    for( var pid in $cart ) { 
+      var product = $cart[pid];
+      var montant = product.price * product.quantity ;
+      var discount = (product.discount * montant) / 100;
+      totalCart += montant - discount;
+
+      $('#cartTable tbody').append(
+        `<tr>
+          <td class="name"> <i class="fa fa-times deleteProduct" data-id="${ product.id }" aria-hidden="true"></i> &nbsp; ${ product.reference } <br> ${ ! configoptions.updatename ? product.name : '<textarea data-id="'+product.id+'" style="width: 90%;" class="form-control updatename" >'+product.name+'</textarea>'}
+          </td> 
+          <td class="qty">
+            <i class="fa fa-minus-circle qtyminus" data-id="${ product.id }" aria-hidden="true"></i>
+            <span>${ product.quantity }</span>
+            <i class="fa fa-plus-circle qtyplus" data-id="${ product.id }" aria-hidden="true"></i>
+          </td>
+          <td class="price"> ${ ! configoptions.updatePrice ? tofixed2(product.price) : '<input data-id="'+product.id+'" '+( product.achat > 0 || product.achat == -1 ? 'disabled=""' : '' )+' value="'+product.price+'" class="updatePrice form-control p-0 text-end" step="0.01" type="number" min="0" style="width: 100px; display: inline;" data-purchase_price="'+ product.purchase_price +'">' } ${ ! configoptions.showpurchase_price ? '' : '<div>P. achat : '+(product.purchase_price || '')+'</div>' } 
+          </td>
+          <td class="montant">
+            <span class="montant ${ product.discount > 0 ? 'has-discount' : '' }">${ tofixed2(montant) } DH</span> <i class="fa fa-tags showdiscount" data-target="#divdiscount${ product.id }" style="cursor: pointer;"></i> <div class="divdiscount" id="divdiscount${ product.id }"> <input value="${ product.discount }" min="0" max="${ maxdiscount }" class="form-control updateDiscount" type="number" data-id="${ product.id }">% </div> ${ product.discount > 0 ? '<span class="montant-final">'+tofixed2(montant - discount) + ' DH</span>' : '' }
+          </td>
+        </tr>`
+      );
+    }
+  }
+
+  if( $('.cart .table-responsive.empty').length && Object.keys($cart).length == 1 ){
+    //$('.cart .table-responsive').show('slow');
+    $('.toggle-cart').trigger('click');
+    $('.cart .table-responsive').removeClass('empty');
+  }
+  
+  $('.cart-total').text( tofixed2(totalCart) );
+}
+
+function listproductcallback(result){
+
+  $('#product_cards .dataTable').html('');
+
+  $.each(result.data, function(key, product) {
+    $listproducts['prd-'+product.id] = product;
+    $('#product_cards .dataTable').append(`
+      <div class="col-sm-6 col-lg-2">
+        <div class="card position-relative addToCart producmt cat_prod_${ product.categorie_id }" data-id="${ product.id }">
+          <a class="d-block"><img src="${ product.picture || '../assets/img/noimage.png' }" class="card-img-top" style="max-height: 150px;"></a>
+          <div class="ribbon bg-secondary bg-gradient">${ tofixed2(product.price) } DH</div>
+          <div class="card-body p-2 position-absolute" style="background: rgba(0, 0, 0, 0.5); color: #fff;">
+            <span class="badge badge-sm bg-muted text-light mb-1">${ product.reference }</span>
+            <div class="h5">${ product.name }</div>
+          </div>
+        </div>
+      </div>`);
+  });
+
+
+
+          
+  //loadSelect(true,'civilite', '.etiqueteur-update #civilite_id', 'id', 'sexe',object.civilite_id);
+}
+
+</script>

@@ -1,0 +1,72 @@
+<div class="shelf-update pannel pannel-update pannel-shelf"> 
+    <div class="data">
+        <table class="table table-hover table-striped table-bordered">
+            <tr>
+                <td><label>trans_shelf.code</label></td>
+                <td>
+                    <input type="hidden" class="form-control" data-field="shelf_id" />
+                    <input type="text" class="form-control validate" required="required" data-field="shelf_code">
+                    <span validation="trans_shelf.code_validation"></span>  
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="actions">
+        <button type="button" class="btn btn-primary btn-sm" id="create_shelf"> 
+            <i class="fa fa-check"></i>
+            <span>trans_global.valider</span>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    
+jQuery(document).ready(async function(){
+
+    // modifier => remplire les input 
+    if( params && params.id ){
+        await find({
+            module: new Shelf(),
+            id: params.id,
+            success_: function(object){
+                for (const [key, value] of Object.entries(object)) {
+                    $('.shelf-update .form-control[data-field="shelf_'+ key+'"]').val( value );
+                }
+            }
+        });
+    }
+    //ajouter ou modifier shelf
+    $('#create_shelf').click( async function(){
+        
+        if( checkRequiredField('.shelf-update') ) return;
+
+        object_ = [];
+        $('.shelf-update .form-control').each(function(){
+            
+            var field = $(this).data('field');
+            var val = $(this).val();
+
+            if( field ){
+                field = field.replace('shelf_', '');
+                object_[ field ] = val || null;
+            }
+        });
+
+        if( params && params.id ){
+            await save({
+                module: new Shelf(),
+                data: object_,
+            });
+        }else{
+            await create({
+                module: new Shelf(),
+                data: object_,
+            });
+        }
+        
+    });
+
+});
+
+</script>

@@ -1,0 +1,140 @@
+<div class="user-update pannel pannel-update pannel-user"> 
+    <div class="data">
+        <table class="table table-hover table-striped table-bordered">
+            <tr>
+                <td><label>trans_user.firstname</label></td>
+                <td>
+                    <input type="hidden" class="form-control" data-field="user_id" />
+                    <input type="text" class="form-control validate" required="required" data-field="user_firstname">
+                    <span validation="trans_user.firstname_validation"></span>  
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_user.lastename</label></td>
+                <td>
+                    <input type="text" class="form-control validate" required="required" data-field="user_lastename">
+                    <span validation="trans_user.lastename_validation"></span>  
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_user.username</label></td>
+                <td>
+                    <input type="text" class="form-control validate" required="required" data-field="user_username">
+                    <span validation="trans_user.username_validation"></span>  
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_user.password</label></td>
+                <td>
+                    <input type="password" class="form-control validate" required="required" data-field="user_password">
+                    <span validation="trans_user.password_validation"></span>  
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_user.role</label></td>
+                <td>
+                    <select class="form-control" data-field="user_role">
+                        <option value="EMPLOYE">Employe</option>
+                        <option value="ADMIN">ADMIN</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_user.caisse</label></td>
+                <td>
+                    <select class="form-control" data-field="user_caisse">
+                        <option value="0">trans_global.no</option>
+                        <option value="1">trans_global.oui</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_user.cin</label></td>
+                <td>
+                    <input type="text" class="form-control" data-field="user_cin">
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_user.phone</label></td>
+                <td>
+                    <input type="text" class="form-control" data-field="user_phone">
+                </td>
+            </tr>
+            <tr>
+                <td><label>trans_user.adresse</label></td>
+                <td>
+                    <input type="text" class="form-control" data-field="user_adresse">
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="actions">
+        <button type="button" class="btn btn-primary btn-sm" id="create_user"> 
+            <i class="fa fa-check"></i>
+            <span>trans_global.valider</span>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    
+jQuery(document).ready(async function(){
+
+    // modifier => remplire les input 
+    if( params && params.id ){
+        await find({
+            module: new User(),
+            id: params.id,
+            success_: function(object){
+                for (const [key, value] of Object.entries(object)) {
+                    $('.user-update .form-control[data-field="user_'+ key+'"]').val( value );
+                }
+            }
+        });
+    }
+    //ajouter ou modifier user
+    $('#create_user').click( async function(){
+        
+        if( checkRequiredField('.user-update') ) return;
+
+        object_ = [];
+        $('.user-update .form-control').each(function(){
+            
+            var field = $(this).data('field');
+            var val = $(this).val();
+
+            if( field ){
+                field = field.replace('user_', '');
+                object_[ field ] = val || null;
+            }
+        });
+
+        if( params && params.id ){
+            await save({
+                module: new User(),
+                data: object_,
+            });
+        }else{
+            await create({
+                module: new User(),
+                data: object_,
+            });
+        }
+
+        /*await doAjax({
+            module: module_,
+            action: action_,
+            type: 'post',
+            data: object_,
+            success_: function(result){
+                console.log( result )
+            }
+        })*/
+        
+    });
+
+
+});
+
+</script>

@@ -1,0 +1,72 @@
+
+<div class="setting" style="margin: 5px 0;">
+
+    <div class="pannel blue">
+
+        <div class="body-setting">
+
+            <div class="all-tabs-settings">
+
+                <div class="col-md-2">
+                    <div class="panel-group" style="margin: 20px 0 0 20px;">
+                    </div>
+                </div>
+
+                <div class="all-tabs-body col-md-10">
+                    <div class="ats-body-info">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clearfix"></div>
+</div>
+<script type="text/javascript">
+    var setting_array = {
+        'generale': {
+            'name': 'Général',
+            'icon': '../assets/icons/svg2/list.svg',
+            'modules': [
+                'groupe.list',
+                'user.list',
+                'supplier.list',
+                'client.list',
+                'shelf.list',
+                'categorie.list',
+                'product.list',
+            ]
+        },
+    };
+
+    jQuery(document).ready(async function() {
+
+        $cls_active = 'in';
+        for (const [key, obj] of Object.entries(setting_array)) {
+            
+            $html = `<div class="panel panel-default" class="${$cls_active}">
+                        <div class="panel-heading">
+                            <img style="width: 30px; margin-right: 10px" class="" src="${obj.icon}" alt="info-menu">
+                            <a data-toggle="collapse" href="#collapse_${key}">${obj.name}</a>
+                        </div>
+                        <div id="collapse_${key}" class="panel-collapse collapse ${$cls_active}">
+                            <ul class="list-group">`;
+
+            for (const module_ of obj.modules) {
+
+                var mdl = module_.split('.')[0];
+                var act = module_.split('.')[1];
+
+                if (isGranted(mdl.toUpperCase() + '_' + act.toUpperCase())){
+                    $html += `<li class="list-group-item" data-view=".ats-body-info" loadView="${mdl},${act},{'trace':false}">${ __(module_) }</li>`;
+                }
+
+            }
+            $html += `</ul> </div> </div>`;
+
+            $('.panel-group').append( $html );
+
+            $cls_active = '';
+        }
+        //$('div.atsn-title.active').trigger('click');
+    });
+</script>

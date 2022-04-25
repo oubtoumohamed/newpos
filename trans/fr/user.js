@@ -1,0 +1,25 @@
+trans_user={
+    "modelname":"Utilisateurs",
+    'list' : 'Liste des utilisateurs',
+    "new":"Ajouter utilisateur",
+    "update":"Modifier utilisateur",
+
+    "firstname":"Nom",
+    "lastename":"Prénom",
+    "email":"Email",
+    "password" : "Mot de passe",
+    "confirmation" : "Confirmation mot de passe",
+    'caisse': 'Caisseur',
+    'cin': 'CIN',
+    'role': 'Rôle',
+    'phone': 'Téléphone',
+    'username': 'Nom d\'utilisateur',
+    "adresse":"Adresse",
+    'groupe' : 'Fonction',
+
+    "firstname_validation":"Le nom est obligatoire.",
+    "lastename_validation":"Le prénom est obligatoire.",
+    "username_validation":"Le nom d\'utilisateur est obligatoire.",
+    "password_validation":"Le password  est obligatoire.",
+    "password_confirmation_validation":"La confirmation password est obligatoire.",
+};
