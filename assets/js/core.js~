@@ -1,7 +1,7 @@
 const electron = require('electron');
 const {app, remote, ipcRenderer } = electron;
 const { BrowserWindow, ipcMain } = electron.remote;
-const JsBarcode = require('jsbarcode');
+
 const Barcode = require('barcode-scanner-web');
 let scanner = new Barcode.Scanner();
 

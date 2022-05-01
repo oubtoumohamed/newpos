@@ -20,6 +20,7 @@
   "dependencies": {
     "barcode-scanner-web": "^0.0.1",
     "glob": "^7.1.0",
+    "jsbarcode": "^3.11.5",
     "moment": "^2.29.1",
     "mysql": "^2.18.1",
     "sqlite3": "^5.0.2"
